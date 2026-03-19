@@ -88,6 +88,16 @@ All in one loop.
 
 ---
 
+## 🧭 Ecosystem
+
+Spice is the core runtime.
+
+To try it in a real scenario, see:
+
+👉 **[Spice Personal](https://github.com/Dyalwayshappy/spice_personal)** — a reference app for personal decision-making
+
+---
+
 
 ## 🌍 Beyond Personal
 
@@ -126,7 +136,7 @@ It is a **foundation for building decision systems.**
 **Install from source (latest features, for development)**
 
 ```bash
-git clone https://github.com/Dyalwayshappy/Spice_personal.git
+git clone https://github.com/Dyalwayshappy/Spice.git
 cd Spice_personal
 pip install -e .
 ```
