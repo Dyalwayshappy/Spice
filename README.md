@@ -194,15 +194,12 @@ and generates a default configuration file.
 ```bash
 spice-personal ask "What should I do next?"
 ```
-Since no model is configured yet, you will see a Decision Card guiding you to the next step:
+Since no model is configured yet, Spice will guide you with a structured Decision Card:
 
-Setup required (no model configured)
+<p align="center"> <img src="quickstart_image.png" alt="Quickstart onboarding" width="700"> </p>
 
-Next:
+This helps you understand the next step instead of failing silently.
 
--> Edit .spice/personal/personal.config.json
-
--> Then run: spice-personal ask "What should I do next?"
 
 
 
