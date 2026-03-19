@@ -1,0 +1,258 @@
+{
+  "baseline_cycles_to_stable": null,
+  "baseline_replay_summary": {
+    "action_sequence": [
+      "incident.rollback_release",
+      "incident.rollback_release",
+      "incident.rollback_release",
+      "incident.rollback_release",
+      "incident.rollback_release"
+    ],
+    "action_sequence_text": "1:incident.rollback_release -> 2:incident.rollback_release -> 3:incident.rollback_release -> 4:incident.rollback_release -> 5:incident.rollback_release",
+    "cycles_to_stable": null,
+    "determinism_message": "deterministic",
+    "deterministic": true,
+    "policy_hash": "36b34372202e6f86adba96a74cb6e9d14993d1d7a205aa3c04958adce6d7f129",
+    "policy_name": "incident.baseline",
+    "policy_version": "0.2",
+    "total_cycles": 5
+  },
+  "candidate_cycles_to_stable": 3,
+  "candidate_replay_summary": {
+    "action_sequence": [
+      "incident.rollback_release",
+      "incident.disable_feature_flag",
+      "incident.request_hotfix",
+      "incident.monitor",
+      "incident.monitor"
+    ],
+    "action_sequence_text": "1:incident.rollback_release -> 2:incident.disable_feature_flag -> 3:incident.request_hotfix -> 4:incident.monitor -> 5:incident.monitor",
+    "cycles_to_stable": 3,
+    "determinism_message": "deterministic",
+    "deterministic": true,
+    "policy_hash": "5f5e9f8d6eb8c6f19e3bb55f2c1ebf1c48ba285e2324c889410247cd3cd544a9",
+    "policy_name": "incident.context_aware",
+    "policy_version": "0.2",
+    "total_cycles": 5
+  },
+  "cycles": [
+    {
+      "baseline_action": "incident.rollback_release",
+      "candidate_action": "incident.rollback_release",
+      "cycle_index": 1,
+      "divergence": false,
+      "observation_id": "obs-001-alert-opened",
+      "observed_signal_summary": {
+        "error_rate": 0.12,
+        "feature_flag_enabled": true,
+        "latency_p95_ms": 1850,
+        "observation_type": "incident.alert_opened",
+        "recent_deploy": true,
+        "service": "checkout-api",
+        "severity": "critical"
+      },
+      "previous_outcome_summary": {
+        "baseline": null,
+        "candidate": null
+      },
+      "proactive": false,
+      "scene_label": "Trigger",
+      "stable_after_cycle": {
+        "baseline": false,
+        "candidate": false
+      }
+    },
+    {
+      "baseline_action": "incident.rollback_release",
+      "candidate_action": "incident.disable_feature_flag",
+      "cycle_index": 2,
+      "divergence": true,
+      "observation_id": "obs-002-snapshot",
+      "observed_signal_summary": {
+        "error_rate": 0.12,
+        "feature_flag_enabled": true,
+        "latency_p95_ms": 1850,
+        "observation_type": "incident.metric_snapshot",
+        "recent_deploy": true,
+        "service": "checkout-api",
+        "severity": "critical"
+      },
+      "previous_outcome_summary": {
+        "baseline": {
+          "action": "incident.rollback_release",
+          "error_rate": 0.12,
+          "human_summary": "Rollback failed; service still unstable.",
+          "incident_open": true,
+          "latency_p95_ms": 1850,
+          "outcome_id": "outcome.sim.001.incident_rollback_release",
+          "status": "failed"
+        },
+        "candidate": {
+          "action": "incident.rollback_release",
+          "error_rate": 0.12,
+          "human_summary": "Rollback failed; service still unstable.",
+          "incident_open": true,
+          "latency_p95_ms": 1850,
+          "outcome_id": "outcome.sim.001.incident_rollback_release",
+          "status": "failed"
+        }
+      },
+      "proactive": false,
+      "scene_label": "Divergence",
+      "stable_after_cycle": {
+        "baseline": false,
+        "candidate": true
+      }
+    },
+    {
+      "baseline_action": "incident.rollback_release",
+      "candidate_action": "incident.request_hotfix",
+      "cycle_index": 3,
+      "divergence": true,
+      "observation_id": "obs-003-snapshot",
+      "observed_signal_summary": {
+        "error_rate": 0.12,
+        "feature_flag_enabled": true,
+        "latency_p95_ms": 1850,
+        "observation_type": "incident.metric_snapshot",
+        "recent_deploy": true,
+        "service": "checkout-api",
+        "severity": "critical"
+      },
+      "previous_outcome_summary": {
+        "baseline": {
+          "action": "incident.rollback_release",
+          "error_rate": 0.12,
+          "human_summary": "Rollback failed; service still unstable.",
+          "incident_open": true,
+          "latency_p95_ms": 1850,
+          "outcome_id": "outcome.sim.002.incident_rollback_release",
+          "status": "failed"
+        },
+        "candidate": {
+          "action": "incident.disable_feature_flag",
+          "error_rate": 0.006,
+          "human_summary": "Feature flag disabled; service recovered.",
+          "incident_open": false,
+          "latency_p95_ms": 180,
+          "outcome_id": "outcome.sim.002.incident_disable_feature_flag",
+          "status": "applied"
+        }
+      },
+      "proactive": true,
+      "scene_label": "Proactive Closure",
+      "stable_after_cycle": {
+        "baseline": false,
+        "candidate": true
+      }
+    },
+    {
+      "baseline_action": "incident.rollback_release",
+      "candidate_action": "incident.monitor",
+      "cycle_index": 4,
+      "divergence": true,
+      "observation_id": "obs-004-snapshot",
+      "observed_signal_summary": {
+        "error_rate": 0.12,
+        "feature_flag_enabled": true,
+        "latency_p95_ms": 1850,
+        "observation_type": "incident.metric_snapshot",
+        "recent_deploy": true,
+        "service": "checkout-api",
+        "severity": "critical"
+      },
+      "previous_outcome_summary": {
+        "baseline": {
+          "action": "incident.rollback_release",
+          "error_rate": 0.12,
+          "human_summary": "Rollback failed; service still unstable.",
+          "incident_open": true,
+          "latency_p95_ms": 1850,
+          "outcome_id": "outcome.sim.003.incident_rollback_release",
+          "status": "failed"
+        },
+        "candidate": {
+          "action": "incident.request_hotfix",
+          "error_rate": 0.006,
+          "human_summary": "Hotfix requested after stabilization.",
+          "incident_open": false,
+          "latency_p95_ms": 180,
+          "outcome_id": "outcome.sim.003.incident_request_hotfix",
+          "status": "applied"
+        }
+      },
+      "proactive": false,
+      "scene_label": "Monitoring",
+      "stable_after_cycle": {
+        "baseline": false,
+        "candidate": true
+      }
+    },
+    {
+      "baseline_action": "incident.rollback_release",
+      "candidate_action": "incident.monitor",
+      "cycle_index": 5,
+      "divergence": true,
+      "observation_id": "obs-005-snapshot",
+      "observed_signal_summary": {
+        "error_rate": 0.12,
+        "feature_flag_enabled": true,
+        "latency_p95_ms": 1850,
+        "observation_type": "incident.metric_snapshot",
+        "recent_deploy": true,
+        "service": "checkout-api",
+        "severity": "critical"
+      },
+      "previous_outcome_summary": {
+        "baseline": {
+          "action": "incident.rollback_release",
+          "error_rate": 0.12,
+          "human_summary": "Rollback failed; service still unstable.",
+          "incident_open": true,
+          "latency_p95_ms": 1850,
+          "outcome_id": "outcome.sim.004.incident_rollback_release",
+          "status": "failed"
+        },
+        "candidate": {
+          "action": "incident.monitor",
+          "error_rate": 0.006,
+          "human_summary": "Monitoring only; service remains stable.",
+          "incident_open": false,
+          "latency_p95_ms": 180,
+          "outcome_id": "outcome.sim.004.incident_monitor",
+          "status": "observed"
+        }
+      },
+      "proactive": false,
+      "scene_label": "Proof Complete",
+      "stable_after_cycle": {
+        "baseline": false,
+        "candidate": true
+      }
+    }
+  ],
+  "divergent_cycle_after_rollback_failure": 2,
+  "final_proof_summary": "Candidate stabilized faster and performed one proactive follow-up step (candidate=3, baseline=not reached).",
+  "proactive_request_hotfix_cycle": 3,
+  "proof_metric_candidate_lt_baseline": true,
+  "proof_target": "candidate_cycles_to_stable < baseline_cycles_to_stable",
+  "scenario_summary": "A checkout incident starts after a deploy. Baseline keeps choosing rollback under unchanged high pressure. Candidate switches after rollback failure and takes one proactive hotfix step after stabilization.",
+  "schema_version": "0.1",
+  "shadow_summary": {
+    "avg_score_delta": 0.0,
+    "baseline_determinism_message": "deterministic",
+    "baseline_deterministic": true,
+    "candidate_determinism_message": "deterministic",
+    "candidate_deterministic": true,
+    "divergence_rate": 0.8,
+    "total_cycles": 5,
+    "veto_divergence_count": 0
+  },
+  "sources": {
+    "deterministic": true,
+    "generator_script": "generate_demo_artifact.py",
+    "observation_count": 5,
+    "replay_stream": "incident_replay_stream.jsonl"
+  },
+  "title": "Checkout Incident in 5 Cycles: Why History-Aware Decisions Win"
+}

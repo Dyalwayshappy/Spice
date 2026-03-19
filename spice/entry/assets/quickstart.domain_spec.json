@@ -1,0 +1,90 @@
+{
+  "actions": [
+    {
+      "description": "Observe current service state.",
+      "executor": {
+        "operation": "service.monitor",
+        "parameters": {
+          "scope": "service"
+        },
+        "type": "mock"
+      },
+      "expected_outcome_type": "quickstart.service_ops.transition",
+      "id": "quickstart.service_ops.monitor"
+    },
+    {
+      "description": "Notify operator channel.",
+      "executor": {
+        "operation": "service.notify",
+        "parameters": {
+          "channel": "ops"
+        },
+        "type": "mock"
+      },
+      "expected_outcome_type": "quickstart.service_ops.transition",
+      "id": "quickstart.service_ops.notify"
+    }
+  ],
+  "decision": {
+    "default_action": "quickstart.service_ops.monitor"
+  },
+  "demo": {
+    "observations": [
+      {
+        "attributes": {
+          "error_rate": 0.12,
+          "severity": "critical",
+          "status": "open"
+        },
+        "source": "quickstart.demo",
+        "type": "quickstart.service_ops.alert_opened"
+      },
+      {
+        "attributes": {
+          "error_rate": 0.06,
+          "severity": "high",
+          "status": "monitoring"
+        },
+        "source": "quickstart.demo",
+        "type": "quickstart.service_ops.metric_snapshot"
+      }
+    ]
+  },
+  "domain": {
+    "id": "quickstart.service_ops"
+  },
+  "schema_version": "spice.domain_spec.v1",
+  "state": {
+    "entity_id": "quickstart.service_ops.current",
+    "fields": [
+      {
+        "default": "open",
+        "name": "status",
+        "type": "string"
+      },
+      {
+        "default": "high",
+        "name": "severity",
+        "type": "string"
+      },
+      {
+        "default": 0.0,
+        "name": "error_rate",
+        "type": "number"
+      }
+    ]
+  },
+  "vocabulary": {
+    "action_types": [
+      "quickstart.service_ops.monitor",
+      "quickstart.service_ops.notify"
+    ],
+    "observation_types": [
+      "quickstart.service_ops.alert_opened",
+      "quickstart.service_ops.metric_snapshot"
+    ],
+    "outcome_types": [
+      "quickstart.service_ops.transition"
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Incident Commander Demo Visualizer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <h1 id="demoTitle">Incident Commander Timeline</h1>
+        <p id="demoSummary" class="muted">Loading demo artifact...</p>
+      </header>
+
+      <section class="controls">
+        <div class="control-group">
+          <span class="label">View</span>
+          <div class="toggle" role="radiogroup" aria-label="Policy view">
+            <label>
+              <input type="radio" name="policyView" value="baseline" />
+              <span>Baseline</span>
+            </label>
+            <label>
+              <input type="radio" name="policyView" value="candidate" checked />
+              <span>Candidate</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group timeline-group">
+          <span class="label">Timeline Player</span>
+          <div class="player">
+            <button id="prevBtn" type="button">Prev</button>
+            <button id="playBtn" type="button">Play</button>
+            <button id="nextBtn" type="button">Next</button>
+          </div>
+          <input id="cycleRange" type="range" min="1" max="1" step="1" value="1" />
+          <div id="cycleLabel" class="cycle-label">Cycle 1 / 1</div>
+          <div id="sceneLabel" class="scene-label">Scene: n/a</div>
+        </div>
+      </section>
+
+      <section id="cycleBadges" class="badges"></section>
+      <section id="proofStrip" class="proof-strip"></section>
+
+      <section class="panel-grid">
+        <article class="panel">
+          <h2>Incident State</h2>
+          <div id="incidentStateContent"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Current Cycle</h2>
+          <div id="currentCycleContent"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Decision Panel</h2>
+          <div id="decisionPanelContent"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Proof Panel</h2>
+          <div id="proofPanelContent"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
