@@ -126,6 +126,32 @@ It is a **foundation for building decision systems.**
 
 ## 🚀 Quick Start
 
+---
+
+## ✨ Features
+
+Spice turns a question into a structured decision process:
+
+1. **Perception**  
+   Understand the input and extract key signals  
+
+2. **State Modeling**  
+   Build a structured representation of the situation  
+
+3. **Simulation**  
+   Explore possible options and future outcomes  
+
+4. **Decision**  
+   Compare trade-offs and choose a direction  
+
+5. **Execution (optional)**  
+   Delegate actions to external agents  
+
+6. **Reflection**  
+   Learn from outcomes and update state 
+
+
+
 ### 1. Install
 
 
