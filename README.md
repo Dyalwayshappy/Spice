@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="Logo.png" alt="spice" width="500">
+  <img src="spice_logo.png" alt="spice" width="500">
   <h1>Spice: Ultra-Lightweight Personal AI Assistant</h1>
   <p>
     <a href="https://pypi.org/project/nanobot-ai/"><img src="https://img.shields.io/pypi/v/nanobot-ai" alt="PyPI"></a>
