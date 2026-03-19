@@ -1,6 +1,6 @@
 <div align="center">
   <img src="spice_logo.png" alt="spice" width="500">
-  <h1>Spice: Ultra-Lightweight Personal AI Assistant</h1>
+  <h1>Spice: AI Decision Brain</h1>
   <p>
     <a href="https://pypi.org/project/nanobot-ai/"><img src="https://img.shields.io/pypi/v/nanobot-ai" alt="PyPI"></a>
     <a href="https://pepy.tech/project/nanobot-ai"><img src="https://static.pepy.tech/badge/nanobot-ai" alt="Downloads"></a>
@@ -80,10 +80,10 @@
 
 💎 **Easy-to-Use**: One-click to deploy and you're ready to go.
 
-## 🏗️ Architecture
+##  Architecture
 
 <p align="center">
-  <img src="nanobot_arch.png" alt="nanobot architecture" width="800">
+  <img src="spice_structure.png" alt="spice structure" width="800">
 </p>
 
 ## Table of Contents
