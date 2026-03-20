@@ -151,28 +151,6 @@ This example stops at decision + next step.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
----
-
-## 🧭 Ecosystem
-
-Spice is the core runtime.
-
-To try it in a real scenario, see:
-
-👉 **[Spice Personal](https://github.com/Dyalwayshappy/spice_personal)** — a reference app for personal decision-making
-
 ---
 
 
