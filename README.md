@@ -14,7 +14,7 @@
 
 > But they don’t know what to do next.
 
-**Spice** is a **decision-layer runtime — a brain above agents.** inspired by the rise of execution agents like OpenClaw and the concept of **world model**.
+**Spice** is a **decision-layer runtime — a brain above agents.** inspired by **the rise of execution agents like OpenClaw** and the idea of **world model**.
 
 While execution agents (Claude Code, OpenClaw, Codex) are getting better at doing things,  
 Spice focuses on the missing layer:
@@ -49,7 +49,7 @@ Spice is designed to solve that.
 
 Spice provides a structured cognitive loop inspired by the concept of world model :
 
-perception → state → simulation → decision → execution → reflection
+perception → state model → simulation → decision → execution → reflection
 
 It allows AI systems to:
 
@@ -66,8 +66,9 @@ It allows AI systems to:
 
 ## 🌱 Meet Spice Personal
 
-To make this real, we built **Spice Personal** —  
-the first working application of a decision brain.
+Spice is a general **decision runtime**. —  
+
+To make this concrete, we built our first reference application:
 
 It is not just a demo.
 
@@ -93,24 +94,60 @@ All in one loop.
 
 ### 1. Scenario 
 
-I want to quickly build a lightweight tool for a small group of friends.
+> "I want to quickly build a lightweight tool for a small group of friends."
 
+A simple, real-world goal with clear constraints
 
 
 ### 2. What Spice does
 
-- identifies the real decision
+#### Input: Real-world intent with constraints
 
-- compares implementation paths
+![demo1](./demo1.png)
 
-- recommends one option
-
-- captures commitment
-
-- proposes the next action
+<p align="center"><em>starts from intent</em></p>
 
 
-### 3. Screenshots
+---
+
+
+#### Decision → Comparison
+
+![demo2](./demo2.png)
+
+<p align="center"><em>From options → structured decision space</em></p>
+
+
+---
+
+
+#### Commitment → Next step
+
+![demo3](./demo3.png)
+
+
+<p align="center"><em>Decision becomes action</em></p>
+
+
+---
+
+
+
+### 3. About execution (next step)
+
+Spice focuses on the **decision layer**.
+
+In a full workflow, the selected decision can be passed to external agents (e.g. codex and claude code) for execution.
+
+This example stops at decision + next step.
+
+➡️ Next, we will take this exact scenario and connect it to an external agent to **actually build the tool end-to-end**.
+
+> Decision → Execution → Outcome → Reflection
+
+<sub>This is the full loop Spice is designed to enable.</sub>
+
+
 
 
 
