@@ -197,8 +197,14 @@ It is a **foundation for building decision systems.**
 **Install from source (latest features, for development)**
 
 ```bash
+
 git clone https://github.com/Dyalwayshappy/Spice.git
-cd Spice_personal
+cd Spice
+
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+pip install -U pip
 pip install -e .
 ```
 
