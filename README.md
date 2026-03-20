@@ -192,7 +192,7 @@ It is a **foundation for building decision systems.**
 ---
 
 
-##  ⚙ Install
+##  ⚙ Install(Extend the Spice framework to other domains)
 
 **Install from source (latest features, for development)**
 
@@ -211,23 +211,14 @@ pip install -e .
 **Install from PyPI (stable, recommended)**
 
 ```bash
-pip install spice-personal
+pip install spice-runtime
 ```
-
-This will automatically install spice-runtime.
-
 
 ##  Upgrade to latest version
 
 ```bash
-pip install -U spice-personal
-spice-personal --version
-```
-
-### Verify installation
-
-```bash
-spice-personal --help
+pip install -U spice-runtime
+spice-runtime --version
 ```
 
 
