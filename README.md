@@ -201,6 +201,9 @@ Spice is not limited to one use case.
 It is a **foundation for building decision systems.**
 
 
+---
+
+
 ##  👨‍🔧 Spice: Decision Layer Architecture
 
 <p align="center">
