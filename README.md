@@ -88,6 +88,44 @@ All in one loop.
 
 ---
 
+
+## 🧩 Example: from idea → decision → next step 
+
+### 1. Scenario 
+
+I want to quickly build a lightweight tool for a small group of friends.
+
+
+
+### 2. What Spice does
+
+- identifies the real decision
+
+- compares implementation paths
+
+- recommends one option
+
+- captures commitment
+
+- proposes the next action
+
+
+### 3. Screenshots
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
 ## 🧭 Ecosystem
 
 Spice is the core runtime.
