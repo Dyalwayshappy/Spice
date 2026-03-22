@@ -185,7 +185,7 @@ It is a **foundation for building decision systems.**
 ##  👨‍🔧 Spice: Decision Layer Architecture
 
 <p align="center">
-  <img src="spice_structure.png" alt="spice structure" width="800">
+  <img src="spice_arch.png" alt="spice structure" width="800">
 </p>
 
 
