@@ -19,3 +19,6 @@ Thumbs.db
 .vscode/
 .idea/
 artifacts/
+.claude/
+.codex/
+relay_demo_out/
