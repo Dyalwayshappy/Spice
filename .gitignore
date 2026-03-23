@@ -22,3 +22,5 @@ artifacts/
 .claude/
 .codex/
 relay_demo_out/
+.specify/
+specs/
