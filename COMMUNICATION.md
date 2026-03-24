@@ -2,7 +2,10 @@
 
 ## WeChat Group
 
-Scan the QR code below to join Spice Hub:
+<p align="center">
+  <img src="./assets/Wechat.PNG" width="250"/>
+</p>
 
-![WeChat QR](./assets/Wechat.PNG)
-
+<p align="center">
+  Join Spice community · Discuss ideas · Build together
+</p>
