@@ -1,6 +1,11 @@
 <div align="center">
   <img src="spice_logo.png" alt="spice" width="500">
   <h1>Spice — The Decision Layer Above Agents</h1>
+  
+  <p>
+    <strong>English / <a href="./README_zh.md">中文</a></strong>
+  </p>
+  
   <p>
     <a href="https://pypi.org/project/spice-runtime/"><img src="https://img.shields.io/pypi/v/spice-runtime" alt="PyPI"></a>
     <img src="https://img.shields.io/badge/python-≥3.11-blue" alt="Python">
