@@ -607,6 +607,8 @@ Not just a chatbot.
 But a **personal decision brain**  
 that evolves with you over time.
 
+We've recently been considering the commercialization path for Spice, and to achieve our vision, we'll be moving towards a **General AI Brain**. We're currently preparing a very compelling demo, so stay tuned!
+
 ---
 
 We are still early.
