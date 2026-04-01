@@ -1,6 +1,7 @@
 <div align="center">
   <img src="spice_logo.png" alt="spice" width="500">
   <h1>Spice — The Decision Layer Above Agents</h1>
+
   
   <p>
     <strong>English / <a href="./README_zh.md">中文</a></strong>
@@ -13,6 +14,7 @@
     <a href="./COMMUNICATION.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
     <a href="https://discord.gg/DajVWWNMfE"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
   </p>
+  Our demo will coming soon！
 </div>
 
 
