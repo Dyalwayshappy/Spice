@@ -15,6 +15,8 @@ class LLMRouteNotFoundError(KeyError):
 class LLMModelConfigOverride:
     provider_id: str | None = None
     model_id: str | None = None
+    base_url: str | None = None
+    api_key: str | None = None
     temperature: float | None = None
     max_tokens: int | None = None
     timeout_sec: float | None = None
@@ -60,6 +62,10 @@ def _apply_override(
         payload["provider_id"] = override.provider_id
     if override.model_id is not None:
         payload["model_id"] = override.model_id
+    if override.base_url is not None:
+        payload["base_url"] = override.base_url
+    if override.api_key is not None:
+        payload["api_key"] = override.api_key
     if override.temperature is not None:
         payload["temperature"] = override.temperature
     if override.max_tokens is not None:
