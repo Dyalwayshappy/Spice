@@ -31,13 +31,13 @@ Spice focuses on the missing layer:
 
 ---
 
-## Demo of Spice：
+## 🎬 Demo of Spice：
 To gain a more intuitive understanding of Spice, 
 
 please visit our carefully prepared demo about conflicts between life and work events: [Spice-live-demo](https://666ghj.github.io/mirofish-demo/)
 
 ---
-### 🎬 Demo Video
+### Demo Video
 
 <div align="center">
 <a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
