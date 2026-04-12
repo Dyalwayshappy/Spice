@@ -364,7 +364,7 @@ It enables a new way to think, decide, and act:
    Understand your world and extract meaningful signals  
 
 2. **State Modeling**  
-   Build a personal model 
+   Turn it into a structured decision model
 
 3. **Simulation**  
    Explore possible futures before taking action  
