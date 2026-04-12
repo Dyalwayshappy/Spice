@@ -39,6 +39,8 @@ please visit our carefully prepared demo about conflicts between life and work e
 ---
 ### Demo Video
 
+1. Bilibili
+
 <div align="center">
 <a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
 
@@ -46,6 +48,18 @@ Click the image to watch the full demo video of using Spice to handle conflicts 
 </div>
 
 ---
+
+2. YouTube
+
+<div align="center">
+<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
+
+Click the image to watch the full demo video of using Spice to handle conflicts between the digital and physical worlds.
+</div>
+
+---
+
+
 
 ## ⚡ Why it matters
 
