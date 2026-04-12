@@ -14,7 +14,7 @@
     <a href="./COMMUNICATION.md"><img src="https://img.shields.io/badge/WeChat-Group-C5EAB4?style=flat&logo=wechat&logoColor=white" alt="WeChat"></a>
     <a href="https://discord.gg/DajVWWNMfE"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
   </p>
-  Our demo will coming soon！
+  
 </div>
 
 
@@ -28,6 +28,22 @@ While execution agents (Claude Code, OpenClaw, Codex) are getting better at doin
 Spice focuses on the missing layer:
 
 👉 **What should be done next — and why.**
+
+---
+
+## Demo of Spice：
+To gain a more intuitive understanding of Spice, 
+
+please visit our carefully prepared demo about conflicts between life and work events:
+
+---
+### Demo Video
+
+<div align="center">
+<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="./static/image/武大模拟演示封面.png" alt="Spice Demo Video" width="75%"/></a>
+
+Click the image to watch the complete demo video for prediction using BettaFish-generated "Wuhan University Public Opinion Report"
+</div>
 
 ---
 
