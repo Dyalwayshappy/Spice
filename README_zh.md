@@ -31,6 +31,24 @@ Spice 专注于缺失的那一层：
 
 ---
 
+## 🎬 Spice展示视频：
+为了更直观地了解 Spice，
+
+请观看我们精心准备的关于生活与工作冲突的演示： [Spice-live-demo](https://666ghj.github.io/mirofish-demo/)
+
+---
+### Demo视频
+
+1. Bilibili
+
+<div align="center">
+<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
+
+点击图片观看使用 Spice 处理数字世界和物理世界之间冲突的完整演示视频。
+</div>
+
+---
+
 ## ⚡ 为什么这很重要
 
 今天，我们拥有可以完成几乎任何任务的强大 Agent：
