@@ -34,7 +34,7 @@ Spice 专注于缺失的那一层：
 ## 🎬 Spice展示视频：
 为了更直观地了解 Spice，
 
-请观看我们精心准备的关于生活与工作冲突的演示： [Spice-live-demo](https://666ghj.github.io/mirofish-demo/)
+请观看我们精心准备的关于生活与工作冲突的演示： [Spice-live-demo](https://www.bilibili.com/video/BV1rhDRB7Ehn/)
 
 ---
 ### Demo视频
@@ -42,7 +42,7 @@ Spice 专注于缺失的那一层：
 1. Bilibili
 
 <div align="center">
-<a href="https://www.bilibili.com/video/BV1VYBsBHEMY/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
+<a href="https://www.bilibili.com/video/BV1rhDRB7Ehn/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
 
 点击图片观看使用 Spice 处理数字世界和物理世界之间冲突的完整演示视频。
 </div>
