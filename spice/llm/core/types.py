@@ -23,6 +23,8 @@ class LLMRequest:
 class LLMModelConfig:
     provider_id: str
     model_id: str
+    base_url: str | None = None
+    api_key: str | None = field(default=None, repr=False)
     temperature: float | None = None
     max_tokens: int | None = None
     timeout_sec: float | None = None

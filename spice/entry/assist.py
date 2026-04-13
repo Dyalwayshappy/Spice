@@ -5,11 +5,11 @@ import os
 import shlex
 import subprocess
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TextIO
 
-from spice.entry.spec import DomainSpec, DomainSpecValidationError
+from spice.entry.spec import SCHEMA_VERSION_V1, DomainSpec, DomainSpecValidationError
 from spice.llm.core import (
     LLMClient,
     LLMModelConfig,
@@ -18,7 +18,11 @@ from spice.llm.core import (
     LLMTaskHook,
     ProviderRegistry,
 )
-from spice.llm.providers import DeterministicLLMProvider, SubprocessLLMProvider
+from spice.llm.providers import (
+    DeterministicLLMProvider,
+    OpenAPICompatibleLLMProvider,
+    SubprocessLLMProvider,
+)
 from spice.llm.services import AssistDraftService
 from spice.llm.util import extract_first_json_object, strip_markdown_fences
 
@@ -26,6 +30,16 @@ from spice.llm.util import extract_first_json_object, strip_markdown_fences
 ASSIST_ARTIFACTS_DIRNAME = "assist"
 ASSIST_MAX_TRIES_DEFAULT = 3
 ASSIST_SUMMARY_SCHEMA_VERSION = "spice.assist.summary.v1"
+ASSIST_PROVIDER_IDS = ("deterministic", "subprocess", "openapi_compatible")
+ASSIST_MODEL_ENV = "SPICE_ASSIST_MODEL"
+
+
+@dataclass(slots=True, frozen=True)
+class AssistModelSelection:
+    provider_id: str
+    model_id: str
+    base_url: str | None = None
+    api_key: str | None = field(default=None, repr=False)
 
 
 @dataclass(slots=True)
@@ -99,9 +113,18 @@ def capture_brief(
 
 def resolve_assist_model(
     *,
+    provider: str | None = None,
     model: str | None,
+    base_url: str | None = None,
+    api_key: str | None = None,
 ) -> tuple[AssistDraftService, str]:
-    model_override = _resolve_assist_model_override(model)
+    selection = resolve_assist_model_selection(
+        provider=provider,
+        model=model,
+        base_url=base_url,
+        api_key=api_key,
+    )
+    model_override = _selection_to_model_override(selection)
     router = _build_assist_router()
     registry = _build_assist_registry()
     client = LLMClient(registry=registry, router=router)
@@ -109,7 +132,91 @@ def resolve_assist_model(
         client=client,
         model_override=model_override,
     )
-    return service, service.resolved_provider_id()
+    return service, selection.provider_id
+
+
+def resolve_assist_model_selection(
+    *,
+    provider: str | None = None,
+    model: str | None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+) -> AssistModelSelection:
+    provider_token = _normalize_token(provider, lower=True)
+    model_token = _normalize_token(model if model is not None else os.environ.get(ASSIST_MODEL_ENV))
+    base_url_token = _normalize_token(base_url)
+    api_key_token = _normalize_token(api_key)
+
+    if provider_token is None:
+        if base_url_token is not None or api_key_token is not None:
+            raise ValueError(
+                "Relay-specific assist options require --assist-provider openapi_compatible."
+            )
+        if model_token is None or model_token.lower() == "deterministic":
+            return AssistModelSelection(
+                provider_id="deterministic",
+                model_id="deterministic.v1",
+            )
+        return AssistModelSelection(
+            provider_id="subprocess",
+            model_id=model_token,
+        )
+
+    if provider_token not in ASSIST_PROVIDER_IDS:
+        supported = ", ".join(ASSIST_PROVIDER_IDS)
+        raise ValueError(
+            f"Unsupported assist provider {provider_token!r}. Expected one of: {supported}."
+        )
+
+    if provider_token == "deterministic":
+        if base_url_token is not None or api_key_token is not None:
+            raise ValueError(
+                "deterministic assist provider does not accept --assist-base-url or --assist-api-key."
+            )
+        if model_token is None or model_token.lower() == "deterministic":
+            return AssistModelSelection(
+                provider_id="deterministic",
+                model_id="deterministic.v1",
+            )
+        raise ValueError(
+            "deterministic assist provider only accepts --assist-model deterministic."
+        )
+
+    if provider_token == "subprocess":
+        if base_url_token is not None or api_key_token is not None:
+            raise ValueError(
+                "subprocess assist provider does not accept --assist-base-url or --assist-api-key."
+            )
+        if model_token is None:
+            raise ValueError("subprocess assist provider requires --assist-model.")
+        if model_token.lower() == "deterministic":
+            raise ValueError(
+                "subprocess assist provider requires a command, not --assist-model deterministic."
+            )
+        return AssistModelSelection(
+            provider_id="subprocess",
+            model_id=model_token,
+        )
+
+    missing: list[str] = []
+    if model_token is None:
+        missing.append("--assist-model")
+    if base_url_token is None:
+        missing.append("--assist-base-url")
+    if api_key_token is None:
+        missing.append("--assist-api-key")
+    if missing:
+        raise ValueError(
+            "openapi_compatible assist provider requires "
+            + ", ".join(missing)
+            + "."
+        )
+    return AssistModelSelection(
+        provider_id="openapi_compatible",
+        model_id=model_token,
+        base_url=base_url_token,
+        api_key=api_key_token,
+    )
 
 
 def run_assist_session(
@@ -260,6 +367,7 @@ def _build_assist_registry() -> ProviderRegistry:
     return (
         ProviderRegistry.empty()
         .register(DeterministicLLMProvider())
+        .register(OpenAPICompatibleLLMProvider())
         .register(SubprocessLLMProvider())
     )
 
@@ -281,22 +389,33 @@ def _build_assist_router() -> LLMRouter:
     )
 
 
-def _resolve_assist_model_override(model: str | None) -> LLMModelConfigOverride | None:
-    raw = model if model is not None else os.environ.get("SPICE_ASSIST_MODEL")
-    if raw is None:
+def _selection_to_model_override(
+    selection: AssistModelSelection,
+) -> LLMModelConfigOverride | None:
+    if (
+        selection.provider_id == "deterministic"
+        and selection.model_id == "deterministic.v1"
+        and selection.base_url is None
+        and selection.api_key is None
+    ):
         return None
-    token = raw.strip()
+    return LLMModelConfigOverride(
+        provider_id=selection.provider_id,
+        model_id=selection.model_id,
+        base_url=selection.base_url,
+        api_key=selection.api_key,
+    )
+
+
+def _normalize_token(value: str | None, *, lower: bool = False) -> str | None:
+    if value is None:
+        return None
+    token = value.strip()
     if not token:
         return None
-    if token.lower() == "deterministic":
-        return LLMModelConfigOverride(
-            provider_id="deterministic",
-            model_id="deterministic.v1",
-        )
-    return LLMModelConfigOverride(
-        provider_id="subprocess",
-        model_id=token,
-    )
+    if lower:
+        return token.lower()
+    return token
 
 
 def _draft_with_retry(
@@ -381,6 +500,7 @@ def _validate_assist_contract(payload: dict[str, Any]) -> AssistDraftContract:
     draft_spec = payload.get("draft_spec")
     if not isinstance(draft_spec, dict):
         raise ValueError("draft_spec is required and must be an object.")
+    normalized_draft_spec = _normalize_assist_draft_spec(draft_spec)
 
     assumptions = _as_string_list(payload.get("assumptions", []), field_name="assumptions")
     warnings = _as_string_list(payload.get("warnings", []), field_name="warnings")
@@ -390,7 +510,7 @@ def _validate_assist_contract(payload: dict[str, Any]) -> AssistDraftContract:
     if not isinstance(confidence_raw, dict):
         raise ValueError("confidence must be an object.")
     return AssistDraftContract(
-        draft_spec=dict(draft_spec),
+        draft_spec=normalized_draft_spec,
         assumptions=assumptions,
         warnings=warnings,
         missing_info=missing_info,
@@ -408,8 +528,9 @@ def _validate_edited_draft(
     prior_errors: list[str],
 ) -> AssistDraftResult:
     errors = list(prior_errors)
+    normalized_payload = _normalize_assist_draft_spec(draft_spec_payload)
     try:
-        spec = DomainSpec.from_dict(draft_spec_payload)
+        spec = DomainSpec.from_dict(normalized_payload)
     except DomainSpecValidationError as exc:
         errors.append(f"edited draft validation error: {exc}")
         spec = None
@@ -419,7 +540,7 @@ def _validate_edited_draft(
     missing_info = list(prior_contract.missing_info) if prior_contract else []
     confidence = dict(prior_contract.confidence) if prior_contract else {}
     contract = AssistDraftContract(
-        draft_spec=dict(draft_spec_payload),
+        draft_spec=normalized_payload,
         assumptions=assumptions,
         warnings=warnings,
         missing_info=missing_info,
@@ -738,3 +859,357 @@ def _as_string_list(value: Any, *, field_name: str) -> list[str]:
 
 def _join_non_empty(parts: list[str]) -> str:
     return "\n".join(part for part in parts if part)
+
+
+def _normalize_assist_draft_spec(payload: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(payload)
+    domain_id = _normalize_domain_id(_extract_domain_id(normalized) or "assist_domain")
+
+    normalized["schema_version"] = _normalize_schema_version(normalized.get("schema_version"))
+
+    domain_payload = normalized.get("domain")
+    if isinstance(domain_payload, dict):
+        domain_copy = dict(domain_payload)
+        domain_copy["id"] = domain_id
+        normalized["domain"] = domain_copy
+
+    normalized["state"] = _normalize_state_payload(
+        normalized.get("state"),
+        domain_id=domain_id,
+    )
+    normalized["actions"] = _normalize_actions_payload(
+        normalized.get("actions"),
+        domain_id=domain_id,
+        vocabulary=normalized.get("vocabulary"),
+    )
+    normalized["decision"] = _normalize_decision_payload(
+        normalized.get("decision"),
+        actions=normalized["actions"],
+    )
+    normalized["demo"] = _normalize_demo_payload(
+        normalized.get("demo"),
+        domain_id=domain_id,
+    )
+    normalized["vocabulary"] = _normalize_vocabulary_payload(
+        normalized.get("vocabulary"),
+        actions=normalized["actions"],
+        demo=normalized["demo"],
+    )
+    return normalized
+
+
+def _normalize_schema_version(value: Any) -> str:
+    token = str(value or "").strip().lower().replace(" ", "")
+    if token in {
+        "",
+        SCHEMA_VERSION_V1.lower(),
+        "spice.domainspec.v1",
+        "spice.domainspec.v1",
+    }:
+        return SCHEMA_VERSION_V1
+    return str(value)
+
+
+def _normalize_domain_id(value: str) -> str:
+    cleaned = value.strip().lower().replace("-", "_").replace(" ", "_")
+    filtered = "".join(ch if (ch.isalnum() or ch in "._") else "_" for ch in cleaned)
+    collapsed = filtered.strip("._")
+    if not collapsed:
+        return "assist_domain"
+    parts = [part for part in collapsed.split(".") if part]
+    normalized_parts: list[str] = []
+    for part in parts:
+        segment = part
+        if not segment[0].isalpha():
+            segment = f"a_{segment}"
+        normalized_parts.append(segment)
+    return ".".join(normalized_parts) or "assist_domain"
+
+
+def _normalize_state_payload(value: Any, *, domain_id: str) -> dict[str, Any]:
+    payload = dict(value) if isinstance(value, dict) else {}
+    entity_id_raw = payload.get("entity_id")
+    entity_id = (
+        _normalize_domain_id(str(entity_id_raw))
+        if isinstance(entity_id_raw, str) and entity_id_raw.strip()
+        else f"{domain_id}.current"
+    )
+    return {
+        "entity_id": entity_id,
+        "fields": _normalize_state_fields(payload.get("fields")),
+    }
+
+
+def _normalize_state_fields(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, list):
+        items = value
+    elif isinstance(value, dict):
+        items = []
+        for key, item_value in value.items():
+            if isinstance(item_value, dict):
+                item_payload = dict(item_value)
+            else:
+                item_payload = {"type": _infer_field_type(item_value), "default": item_value}
+            item_payload.setdefault("name", str(key))
+            items.append(item_payload)
+    else:
+        items = []
+
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+        raw_name = item.get("name") or item.get("id") or item.get("field") or f"field_{index + 1}"
+        name = _normalize_field_name(str(raw_name))
+        if not name:
+            continue
+        field_payload: dict[str, Any] = {
+            "name": name,
+            "type": _normalize_field_type(item.get("type")),
+        }
+        if "default" in item:
+            field_payload["default"] = item["default"]
+        description = item.get("description")
+        if isinstance(description, str) and description.strip():
+            field_payload["description"] = description.strip()
+        normalized.append(field_payload)
+
+    if normalized:
+        return _dedupe_named_objects(normalized, key="name")
+    return [{"name": "status", "type": "string", "default": "unknown"}]
+
+
+def _normalize_actions_payload(value: Any, *, domain_id: str, vocabulary: Any) -> list[dict[str, Any]]:
+    items = value if isinstance(value, list) else []
+    vocabulary_action_types: list[str] = []
+    if isinstance(vocabulary, dict):
+        raw_action_types = vocabulary.get("action_types")
+        if isinstance(raw_action_types, list):
+            vocabulary_action_types = [str(item) for item in raw_action_types if isinstance(item, str)]
+
+    vocabulary_outcome_types: list[str] = []
+    if isinstance(vocabulary, dict):
+        raw_outcome_types = vocabulary.get("outcome_types")
+        if isinstance(raw_outcome_types, list):
+            vocabulary_outcome_types = [str(item) for item in raw_outcome_types if isinstance(item, str)]
+
+    fallback_outcome = (
+        _normalize_domain_id(vocabulary_outcome_types[0])
+        if vocabulary_outcome_types
+        else f"{domain_id}.transition"
+    )
+
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+        raw_action_id = (
+            item.get("id")
+            or item.get("type")
+            or (vocabulary_action_types[index] if index < len(vocabulary_action_types) else "")
+            or f"{domain_id}.action_{index + 1}"
+        )
+        action_id = _normalize_domain_id(str(raw_action_id))
+        normalized.append(
+            {
+                "id": action_id,
+                "description": str(item.get("description", "")).strip(),
+                "executor": _normalize_action_executor(item.get("executor"), action_id=action_id),
+                "expected_outcome_type": _normalize_domain_id(
+                    str(item.get("expected_outcome_type") or fallback_outcome)
+                ),
+            }
+        )
+
+    if normalized:
+        return _dedupe_named_objects(normalized, key="id")
+    fallback_action_id = f"{domain_id}.monitor"
+    return [
+        {
+            "id": fallback_action_id,
+            "description": "Observe current state.",
+            "executor": {
+                "type": "mock",
+                "operation": fallback_action_id,
+            },
+            "expected_outcome_type": fallback_outcome,
+        }
+    ]
+
+
+def _normalize_action_executor(value: Any, *, action_id: str) -> dict[str, Any]:
+    if isinstance(value, dict):
+        payload = dict(value)
+        executor_type = str(payload.get("type", "")).strip().lower()
+        if executor_type not in {"mock", "cli", "sdep"}:
+            executor_type = "mock"
+        operation = str(payload.get("operation", "")).strip() or action_id
+        parameters = payload.get("parameters", {})
+        if not isinstance(parameters, dict):
+            parameters = {}
+        return {
+            "type": executor_type,
+            "operation": operation,
+            "parameters": dict(parameters),
+        }
+    return {
+        "type": "mock",
+        "operation": action_id,
+    }
+
+
+def _normalize_decision_payload(value: Any, *, actions: list[dict[str, Any]]) -> dict[str, Any]:
+    payload = dict(value) if isinstance(value, dict) else {}
+    default_action = payload.get("default_action")
+    normalized_default = _normalize_domain_id(str(default_action)) if isinstance(default_action, str) else ""
+    action_ids = [str(item.get("id", "")) for item in actions if isinstance(item, dict)]
+    if normalized_default not in action_ids and action_ids:
+        normalized_default = action_ids[0]
+    return {"default_action": normalized_default}
+
+
+def _normalize_demo_payload(value: Any, *, domain_id: str) -> dict[str, Any]:
+    payload = dict(value) if isinstance(value, dict) else {}
+    observations = payload.get("observations")
+    items = observations if isinstance(observations, list) else []
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            continue
+        obs_type = _normalize_domain_id(
+            str(item.get("type") or f"{domain_id}.observation_{index + 1}")
+        )
+        source = str(item.get("source", "")).strip() or f"{domain_id}.demo"
+        attributes = item.get("attributes")
+        if isinstance(attributes, dict):
+            attrs = dict(attributes)
+        else:
+            attrs = {
+                key: val
+                for key, val in item.items()
+                if key not in {"type", "source", "attributes", "metadata"}
+            }
+        metadata = item.get("metadata")
+        metadata_payload = dict(metadata) if isinstance(metadata, dict) else {}
+        normalized.append(
+            {
+                "type": obs_type,
+                "source": source,
+                "attributes": attrs,
+                "metadata": metadata_payload,
+            }
+        )
+    if normalized:
+        return {"observations": normalized}
+    return {
+        "observations": [
+            {
+                "type": f"{domain_id}.observation",
+                "source": f"{domain_id}.demo",
+                "attributes": {},
+            }
+        ]
+    }
+
+
+def _normalize_vocabulary_payload(value: Any, *, actions: list[dict[str, Any]], demo: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(value) if isinstance(value, dict) else {}
+    observation_types = _dedupe_strings(
+        [
+            _normalize_domain_id(str(item.get("type", "")))
+            for item in demo.get("observations", [])
+            if isinstance(item, dict) and str(item.get("type", "")).strip()
+        ]
+    )
+    action_types = _dedupe_strings(
+        [
+            _normalize_domain_id(str(item.get("id", "")))
+            for item in actions
+            if isinstance(item, dict) and str(item.get("id", "")).strip()
+        ]
+    )
+    outcome_types = _dedupe_strings(
+        [
+            _normalize_domain_id(str(item.get("expected_outcome_type", "")))
+            for item in actions
+            if isinstance(item, dict) and str(item.get("expected_outcome_type", "")).strip()
+        ]
+    )
+
+    fallback_observations = payload.get("observation_types")
+    if not observation_types and isinstance(fallback_observations, list):
+        observation_types = _dedupe_strings(
+            [_normalize_domain_id(str(item)) for item in fallback_observations if isinstance(item, str)]
+        )
+    return {
+        "observation_types": observation_types,
+        "action_types": action_types,
+        "outcome_types": outcome_types,
+    }
+
+
+def _normalize_field_name(value: str) -> str:
+    cleaned = value.strip().lower().replace("-", "_").replace(" ", "_")
+    filtered = "".join(ch if (ch.isalnum() or ch == "_") else "_" for ch in cleaned)
+    filtered = filtered.strip("_")
+    if not filtered:
+        return ""
+    if not filtered[0].isalpha():
+        filtered = f"f_{filtered}"
+    return filtered
+
+
+def _normalize_field_type(value: Any) -> str:
+    token = str(value or "").strip().lower()
+    if token in {"string", "number", "integer", "boolean", "object", "array"}:
+        return token
+    if token in {"float", "double", "decimal"}:
+        return "number"
+    if token in {"int", "long"}:
+        return "integer"
+    if token in {"bool"}:
+        return "boolean"
+    if token in {"dict", "map"}:
+        return "object"
+    if token in {"list", "tuple", "set"}:
+        return "array"
+    if token in {"timestamp", "datetime", "date", "time"}:
+        return "string"
+    return "string"
+
+
+def _infer_field_type(value: Any) -> str:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int) and not isinstance(value, bool):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, list):
+        return "array"
+    return "string"
+
+
+def _dedupe_strings(values: list[str]) -> list[str]:
+    output: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        output.append(value)
+    return output
+
+
+def _dedupe_named_objects(values: list[dict[str, Any]], *, key: str) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for value in values:
+        token = str(value.get(key, ""))
+        if not token or token in seen:
+            continue
+        seen.add(token)
+        output.append(value)
+    return output

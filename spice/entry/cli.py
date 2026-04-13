@@ -6,8 +6,10 @@ from pathlib import Path
 
 from spice.entry.assist import (
     ASSIST_MAX_TRIES_DEFAULT,
+    ASSIST_PROVIDER_IDS,
     capture_brief,
     resolve_assist_model,
+    resolve_assist_model_selection,
     run_assist_session,
     write_assist_artifacts,
 )
@@ -112,6 +114,28 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     init_domain.add_argument(
+        "--assist-provider",
+        type=str,
+        choices=ASSIST_PROVIDER_IDS,
+        default=None,
+        help=(
+            "Explicit assist provider selection. "
+            "Supported values: deterministic, subprocess, openapi_compatible."
+        ),
+    )
+    init_domain.add_argument(
+        "--assist-base-url",
+        type=str,
+        default=None,
+        help="Base URL for the openapi_compatible assist provider.",
+    )
+    init_domain.add_argument(
+        "--assist-api-key",
+        type=str,
+        default=None,
+        help="API key for the openapi_compatible assist provider.",
+    )
+    init_domain.add_argument(
         "--assist-max-tries",
         type=int,
         default=ASSIST_MAX_TRIES_DEFAULT,
@@ -187,6 +211,9 @@ def _handle_init_domain(args: argparse.Namespace) -> int:
     assist_brief_file = args.assist_brief_file
     assist_stdin = bool(args.assist_stdin)
     assist_model = args.assist_model
+    assist_provider = args.assist_provider
+    assist_base_url = args.assist_base_url
+    assist_api_key = args.assist_api_key
     assist_max_tries = max(1, int(args.assist_max_tries))
     with_llm = bool(args.with_llm)
 
@@ -202,6 +229,12 @@ def _handle_init_domain(args: argparse.Namespace) -> int:
 
     try:
         if assist:
+            resolve_assist_model_selection(
+                provider=assist_provider,
+                model=assist_model,
+                base_url=assist_base_url,
+                api_key=assist_api_key,
+            )
             print("[1/7] Capture domain brief ...")
             brief = capture_brief(
                 brief_file=assist_brief_file,
@@ -212,7 +245,12 @@ def _handle_init_domain(args: argparse.Namespace) -> int:
             if not brief.strip():
                 raise RuntimeError("Assist brief is empty.")
 
-            model, model_backend = resolve_assist_model(model=assist_model)
+            model, model_backend = resolve_assist_model(
+                provider=assist_provider,
+                model=assist_model,
+                base_url=assist_base_url,
+                api_key=assist_api_key,
+            )
             print(f"[2/7] Draft DomainSpec via assist model ... ({model_backend})")
             session = run_assist_session(
                 domain_name=str(args.name),

@@ -7,6 +7,7 @@ from typing import Any
 from spice.llm.core import (
     LLMClient,
     LLMModelConfig,
+    LLMModelConfigOverride,
     LLMRequest,
     LLMResponse,
     LLMRouter,
@@ -91,6 +92,36 @@ class LLMClientParamPrecedenceTests(unittest.TestCase):
         self.assertEqual(provider.last_model.max_tokens, 256)
         self.assertEqual(provider.last_model.timeout_sec, 20.0)
         self.assertEqual(provider.last_model.response_format_hint, "json_object")
+
+    def test_override_carries_relay_fields(self) -> None:
+        provider = _CaptureProvider()
+        router_model = LLMModelConfig(
+            provider_id="capture",
+            model_id="router-model",
+            base_url="https://router.example.com",
+            api_key="router-key",
+            temperature=0.4,
+            max_tokens=256,
+            timeout_sec=20.0,
+            response_format_hint="json_object",
+        )
+        client = _build_client(provider=provider, model=router_model)
+        override = LLMModelConfigOverride(
+            provider_id="capture",
+            model_id="router-model",
+            base_url="https://relay.internal",
+            api_key="relay-secret",
+        )
+        request = LLMRequest(
+            task_hook=LLMTaskHook.ASSIST_DRAFT,
+            input_text="prompt",
+        )
+
+        client.generate(request, model_override=override)
+        self.assertIsNotNone(provider.last_model)
+        assert provider.last_model is not None
+        self.assertEqual(provider.last_model.base_url, "https://relay.internal")
+        self.assertEqual(provider.last_model.api_key, "relay-secret")
 
 
 def _build_client(*, provider: LLMProvider, model: LLMModelConfig) -> LLMClient:
