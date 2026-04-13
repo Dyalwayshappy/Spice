@@ -95,7 +95,7 @@ It allows AI systems to:
 - reason about possible futures (simulation)
 - make structured decisions (decision)
 - delegate actions to agents (execution)
-- learn from outcomes (reflection)
+- learn from outcomes (Decision Evolution)
 
   
 ---
