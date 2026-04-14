@@ -18,7 +18,12 @@ from spice.llm.core import (
     LLMTaskHook,
     ProviderRegistry,
 )
-from spice.llm.providers import DeterministicLLMProvider, SubprocessLLMProvider
+from spice.llm.providers import (
+    DeterministicLLMProvider,
+    OpenRouterLLMProvider,
+    SubprocessLLMProvider,
+)
+from spice.llm.services.model_override import resolve_llm_model_override
 from spice.llm.services import AssistDraftService
 from spice.llm.util import extract_first_json_object, strip_markdown_fences
 
@@ -260,6 +265,7 @@ def _build_assist_registry() -> ProviderRegistry:
     return (
         ProviderRegistry.empty()
         .register(DeterministicLLMProvider())
+        .register(OpenRouterLLMProvider())
         .register(SubprocessLLMProvider())
     )
 
@@ -283,19 +289,9 @@ def _build_assist_router() -> LLMRouter:
 
 def _resolve_assist_model_override(model: str | None) -> LLMModelConfigOverride | None:
     raw = model if model is not None else os.environ.get("SPICE_ASSIST_MODEL")
-    if raw is None:
-        return None
-    token = raw.strip()
-    if not token:
-        return None
-    if token.lower() == "deterministic":
-        return LLMModelConfigOverride(
-            provider_id="deterministic",
-            model_id="deterministic.v1",
-        )
-    return LLMModelConfigOverride(
-        provider_id="subprocess",
-        model_id=token,
+    return resolve_llm_model_override(
+        raw,
+        deterministic_model_id="deterministic.v1",
     )
 
 
