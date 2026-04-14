@@ -181,7 +181,7 @@ Spice专注于**决策层**
 ---
 
 
-## 🌍 个人应用之外
+## 🌍 无关乎领域
 
 Spice Personal只是一个参考
 
@@ -216,6 +216,45 @@ Spice不局限于单一用例
 
 
 ---
+
+## 🧭 用户界面: decision.md
+
+Spice的核心用户界面是 `decision.md`.
+
+用户可以通过编辑来配置 Spice 如何比较候选决策：
+
+```text
+.spice/decision/decision.md
+```
+
+需要注意的是，此文件为决策指导文件（Decision Guide），并非记忆信息、prompt构建、执行手册或agent工作流。
+
+在v1中参与运行（Runtime-active）:
+
+- **Primary Objective（核心目标）** — 决策优化的主要方向（最重要的优化目标）
+- **Preferences / Weights（偏好/权重）** — 在候选方案比较时使用的评分维度及权重
+- **Hard Constraints（硬约束）** — 否决条件（在当前 policy / domain adapter 支持的情况下生效）
+- **Trade-off Rules（权衡规则）** — 用于解决冲突的可执行规则（受限子集）
+
+
+在 v1 中暂未参与运行（Runtime-inactive）:
+
+- **Decision Principles（决策原则）**
+- **Evaluation Criteria（评估标准）**
+- **Reflection Guidance（反思指导）**
+
+
+默认配置说明：
+仓库中提供的默认 profile 只是一个起始模板（starter template）。用户应修改本地的`.spice/decision/decision.md`；而不应修改 support JSON 文件（这些文件不是常规配置入口）。
+
+Runtime 支持说明：
+实际的决策执行能力由当前使用的：policy（策略）或 domain adapter（领域适配器）提供支持。
+复制出来的 support JSON 仅用于：解释（explain），演示（demo），调试（debug）
+
+更多说明请参考：`docs/decision.md` 和 `docs/decision_quickstart.md` 
+
+---
+
 
 
 ##  ⚙ 安装(将 Spice 框架扩展到其他领域)
@@ -255,85 +294,209 @@ spice-runtime --version
 
 ## 🚀 快速开始
 
-Spice 是一个决策层运行环境
-
-尝试 Spice 最简单的方法是通过参考应用：**Spice Personal**
-
-
-### 1. 初始化工作区
+体验 Spice 的最快方式是使用内置的 quickstart：
 
 ```bash
-spice-personal init
+spice quickstart --force
 ```
 
-这将在以下位置创建本地工作区：
-> .spice/personal/
-并生成默认配置文件
+该命令会从内置示例 domain 启动，并完整跑通 Spice 的核心边界：
+```text
+decision.md -> example domain runtime -> OpenRouter/local LLM -> optional external executor
+```
+
+执行后会生成以下目录结构:
+
+```text
+.spice/quickstart/                         # deterministic core-loop example
+.spice/quickstart_llm/                     # LLM-ready example runtime
+.spice/decision/decision.md                # user-editable decision profile
+.spice/decision/support/default_support.json
+```
+
+生成的示例可以直接运行，使用默认的 deterministic 配置，首次运行无需 API Key。
 
 
+### Quickstart 展示了什么
 
+```text
+perception -> state -> decision -> execution -> reflection
+```
 
-### 2. 提出你的第一个问题
+默认 quickstart 展示了 Spice 的核心能力：
+
+- 加载决策配置（decision profile）
+- 校验并解释决策规则
+- 运行领域内的决策循环
+- 通过显式 provider 接入模型建议（model advisory）
+- 执行层保持可选 & 可插拔（pluggable）
+
+注意：内置 domain 只是示例。实际项目需要定义：
+
+- DomainSpec
+- domain adapter
+- score 维度
+- 约束检查逻辑
+- 执行边界（executor）
+
+### Core-only 模式
+
+如果只想查看最小的核心决策循环：
 
 ```bash
-spice-personal ask "What should I do next?"
+spice quickstart --core-only --force
 ```
-由于尚未配置模型，Spice 将通过结构化的“决策卡片”引导你：
 
-<p align="center"> <img src="quickstart_image.png" alt="Quickstart onboarding" width="700"> </p>
+仅生成:
 
-这可以帮助你了解下一步，而不是无声无息地失败。
+```text
+.spice/quickstart/
+```
+
+适用于只想理解核心 loop，而不引入 LLM 或 `decision.md` 配置的场景
 
 
+### 1. 编辑 decision.md
+
+主要用户配置文件:
+
+```text
+.spice/decision/decision.md
+```
+
+最推荐的第一步修改是评分权重（Preferences）：
+
+```md
+Preferences:
+- outcome_value: 0.40
+- risk_reduction: 0.25
+- reversibility: 0.20
+- confidence_alignment: 0.15
+```
+
+例如：更偏向安全和可回滚的决策：
+
+```md
+Preferences:
+- outcome_value: 0.25
+- risk_reduction: 0.35
+- reversibility: 0.25
+- confidence_alignment: 0.15
+```
+
+`decision.md` 的作用是控制决策选择逻辑，不是：memory（记忆），agent prompt，执行脚本
 
 
-### 3. 连接模型
-
-编辑生成的配置文件：
-> .spice/personal/personal.config.json
-
-配置你的模型提供商（例如 OpenRouter）并设置你的 API 密钥：
+### 2. 校验与解释（Validate & Explain） 
 
 ```bash
-export OPENROUTER_API_KEY=...
+spice decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
 ```
 
+可加 `--json` 获取结构化输出。
 
-### 4. 运行你的意图
+输出内容包括：
+
+- artifact id / version
+- 校验状态
+- runtime-active / inactive 区块
+- 支持 / 不支持的评分维度
+- 支持 / 不支持的硬约束
+- 支持 / 不支持的权衡规则
+
+Runtime 能力来自 policy / domain adapter，仅修改 support JSON 不会增加能力。
+
+
+### 3. 使用 OpenRouter 模型
+
+接入托管模型：
+
 ```bash
-spice-personal ask "your intent"
+export OPENROUTER_API_KEY="your-openrouter-api-key"
+export SPICE_DOMAIN_MODEL="openrouter:anthropic/claude-3.5-sonnet"
+python .spice/quickstart_llm/run_demo.py
 ```
-现在 Spice 将产生真实的决策，而不仅仅是设置指南。
 
-### 5. （可选）交互模式
+可选 attribution：
+
 ```bash
-spice-personal session
+export SPICE_OPENROUTER_SITE_URL="https://github.com/Dyalwayshappy/Spice"
+export SPICE_OPENROUTER_APP_NAME="Spice"
 ```
 
-### 6. 可选）连接外部 Agent
+### 4. 使用本地或自定义模型
 
-Spice 可以决策结果转化为动作，并将动作委派给外部 Agent（例如 Claude Code, Codex）。
+```bash
+SPICE_DOMAIN_MODEL="ollama run qwen2.5" python .spice/quickstart_llm/run_demo.py
+```
 
-这实现了:
+模型选择规则：
 
-- 获取现实世界的证据
-- 根据决策执行任务
-- 闭合从“决策 → 行动”的环路
+- `deterministic` 内置确定性 provider
+- `openrouter:<model-id>` → OpenRouter
+- 其他 → 作为 subprocess 命令执行
 
-  
-要启用此功能，请在以下位置配置你的 Agent：
-> .spice/personal/personal.config.json
+要求：subprocess 必须从 stdin 读取 prompt，并输出结构化结果。v1 不支持自动加载隐藏模型配置。
 
 
-这是 Spice 超越推理——进入行动的地方
 
-现在 Spice 可以：
+### 5. 在代码中使用 decision.md
 
-- 搜索相关信息
+Quickstart 展示的是文件配置方式，在代码中可以这样接入：
 
-- 调用外部工具（目前支持 CodeX 和 ClaudeCode的Wrapper）
-  
-- 并根据现实世界的信号做出决策
+```python
+from spice.decision import guided_policy_from_profile
+
+policy = guided_policy_from_profile(
+    base_policy,
+    ".spice/decision/decision.md",
+)
+```
+
+实际 runtime 能力仍由 policy / domain adapter 决定。
+
+
+### 6. 接入外部执行 Agent
+
+模型负责：
+
+- 推理（reasoning）
+- 模拟（simulation）
+- 建议（advisory）
+
+真正执行由外部 agent 完成：
+
+
+```text
+Decision -> ExecutionIntent -> external agent -> ExecutionResult -> Outcome -> Reflection
+```
+
+运行内置 SDEP demo：
+
+```bash
+python examples/sdep_agent_demo/run_sdep_adapter_demo.py
+```
+
+可选执行方式：
+
+- `MockExecutor` （本地 / demo）
+- `CLIAdapterExecutor` （命令行工具）
+- `SDEPExecutor` （支持 SDEP 的 agent）
+
+执行是可选 + 可插拔的，不会写入 `decision.md`.
+
+### 7. 最新用户使用流程
+
+```text
+1. clone 并安装 Spice
+2. 运行 spice quickstart
+3. 编辑 .spice/decision/decision.md
+4. 使用 spice decision explain 校验
+5. 选择模型（OpenRouter / deterministic / 本地）
+6. 运行示例 domain
+7. 替换为自己的 DomainSpec / domain adapter
+8. 可选接入外部执行器或 SDEP agent
+```
 
 
 
