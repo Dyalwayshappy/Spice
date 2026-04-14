@@ -1,0 +1,15 @@
+{
+  "score_dimensions": [
+    "outcome_value",
+    "risk_reduction",
+    "reversibility",
+    "confidence_alignment"
+  ],
+  "constraint_ids": [
+    "no_declared_veto_violation"
+  ],
+  "tradeoff_rule_ids": [
+    "prefer_lower_risk_when_candidates_differ",
+    "prefer_higher_confidence_when_candidates_differ"
+  ]
+}
