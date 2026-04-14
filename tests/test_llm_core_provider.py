@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import io
 import json
+import os
 import sys
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 
 from spice.llm.core import (
     LLMAuthError,
@@ -19,7 +23,11 @@ from spice.llm.core import (
     LLMTaskHook,
     ProviderRegistry,
 )
-from spice.llm.providers import DeterministicLLMProvider, SubprocessLLMProvider
+from spice.llm.providers import (
+    DeterministicLLMProvider,
+    OpenRouterLLMProvider,
+    SubprocessLLMProvider,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -193,6 +201,169 @@ class LLMCoreProviderTests(unittest.TestCase):
                     LLMModelConfig(
                         provider_id="subprocess",
                         model_id=f"{sys.executable} {script_path}",
+                    ),
+                )
+
+    def test_openrouter_provider_invocation_success(self) -> None:
+        provider = OpenRouterLLMProvider()
+        captured: dict[str, object] = {}
+
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return json.dumps(
+                    {
+                        "id": "chatcmpl-test",
+                        "model": "anthropic/claude-3.5-sonnet",
+                        "choices": [
+                            {
+                                "finish_reason": "stop",
+                                "message": {"role": "assistant", "content": '{"ok": true}'},
+                            }
+                        ],
+                        "usage": {
+                            "prompt_tokens": 7,
+                            "completion_tokens": 3,
+                            "total_tokens": 10,
+                        },
+                    }
+                ).encode("utf-8")
+
+        def fake_urlopen(request: object, timeout: float | None = None) -> FakeResponse:
+            captured["url"] = getattr(request, "full_url")
+            captured["timeout"] = timeout
+            captured["headers"] = {
+                key.lower(): value
+                for key, value in getattr(request, "header_items")()
+            }
+            captured["payload"] = json.loads(getattr(request, "data").decode("utf-8"))
+            return FakeResponse()
+
+        with patch.dict(
+            os.environ,
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "SPICE_OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+                "SPICE_OPENROUTER_SITE_URL": "https://github.com/Dyalwayshappy/Spice",
+                "SPICE_OPENROUTER_APP_NAME": "Spice",
+            },
+        ), patch("spice.llm.providers.openrouter.urllib_request.urlopen", fake_urlopen):
+            response = provider.generate(
+                LLMRequest(
+                    task_hook=LLMTaskHook.SIMULATION_ADVISE,
+                    system_text="system prompt",
+                    input_text="user prompt",
+                ),
+                LLMModelConfig(
+                    provider_id="openrouter",
+                    model_id="anthropic/claude-3.5-sonnet",
+                    temperature=0.2,
+                    max_tokens=128,
+                    timeout_sec=9.0,
+                    response_format_hint="json_object",
+                ),
+            )
+
+        self.assertEqual(captured["url"], "https://openrouter.ai/api/v1/chat/completions")
+        self.assertEqual(captured["timeout"], 9.0)
+        headers = captured["headers"]
+        self.assertIsInstance(headers, dict)
+        self.assertEqual(headers.get("authorization"), "Bearer test-key")
+        self.assertEqual(headers.get("http-referer"), "https://github.com/Dyalwayshappy/Spice")
+        self.assertEqual(headers.get("x-openrouter-title"), "Spice")
+        payload = captured["payload"]
+        self.assertIsInstance(payload, dict)
+        self.assertEqual(payload["model"], "anthropic/claude-3.5-sonnet")
+        self.assertEqual(
+            payload["messages"],
+            [
+                {"role": "system", "content": "system prompt"},
+                {"role": "user", "content": "user prompt"},
+            ],
+        )
+        self.assertEqual(payload["temperature"], 0.2)
+        self.assertEqual(payload["max_tokens"], 128)
+        self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertEqual(response.provider_id, "openrouter")
+        self.assertEqual(response.model_id, "anthropic/claude-3.5-sonnet")
+        self.assertEqual(response.output_text, '{"ok": true}')
+        self.assertEqual(response.finish_reason, "stop")
+        self.assertEqual(response.request_id, "chatcmpl-test")
+
+    def test_openrouter_provider_requires_api_key(self) -> None:
+        provider = OpenRouterLLMProvider()
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(LLMAuthError):
+                provider.generate(
+                    LLMRequest(task_hook=LLMTaskHook.ASSIST_DRAFT, input_text="x"),
+                    LLMModelConfig(
+                        provider_id="openrouter",
+                        model_id="anthropic/claude-3.5-sonnet",
+                    ),
+                )
+
+    def test_openrouter_provider_requires_model_id(self) -> None:
+        provider = OpenRouterLLMProvider()
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}):
+            with self.assertRaises(LLMResponseError):
+                provider.generate(
+                    LLMRequest(task_hook=LLMTaskHook.ASSIST_DRAFT, input_text="x"),
+                    LLMModelConfig(provider_id="openrouter", model_id=""),
+                )
+
+    def test_openrouter_provider_rate_limit_error_normalization(self) -> None:
+        provider = OpenRouterLLMProvider()
+
+        def fake_urlopen(request: object, timeout: float | None = None) -> object:
+            raise urllib.error.HTTPError(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                code=429,
+                msg="Too Many Requests",
+                hdrs=None,
+                fp=io.BytesIO(b'{"error":"rate limited"}'),
+            )
+
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}), patch(
+            "spice.llm.providers.openrouter.urllib_request.urlopen",
+            fake_urlopen,
+        ):
+            with self.assertRaises(LLMRateLimitError):
+                provider.generate(
+                    LLMRequest(task_hook=LLMTaskHook.ASSIST_DRAFT, input_text="x"),
+                    LLMModelConfig(
+                        provider_id="openrouter",
+                        model_id="anthropic/claude-3.5-sonnet",
+                    ),
+                )
+
+    def test_openrouter_provider_malformed_response_raises_response_error(self) -> None:
+        provider = OpenRouterLLMProvider()
+
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b'{"choices":[]}'
+
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}), patch(
+            "spice.llm.providers.openrouter.urllib_request.urlopen",
+            lambda request, timeout=None: FakeResponse(),
+        ):
+            with self.assertRaises(LLMResponseError):
+                provider.generate(
+                    LLMRequest(task_hook=LLMTaskHook.ASSIST_DRAFT, input_text="x"),
+                    LLMModelConfig(
+                        provider_id="openrouter",
+                        model_id="anthropic/claude-3.5-sonnet",
                     ),
                 )
 
