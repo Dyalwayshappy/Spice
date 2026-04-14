@@ -100,6 +100,8 @@ Preferences and weights guide candidate evaluation when multiple valid candidate
 
 Each weighted dimension maps to a candidate score dimension.
 
+Each scoring dimension must be computable from candidate state and context.
+
 ```md
 Preferences:
 - flight_readiness: 0.35
@@ -108,7 +110,6 @@ Preferences:
 - time_efficiency: 0.10
 - communication_clarity: 0.10
 - implementation_confidence: 0.05
-- Each scoring dimension must be computable from candidate state and context.
 ```
 
 Scoring dimension descriptions:
