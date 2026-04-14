@@ -85,6 +85,65 @@ Not allowed:
 
 Any runtime use of `decision.md` must pass through explicit structured mapping, validation, and deterministic decision-layer control.
 
+## Runtime V1 Boundary
+
+The current runtime-facing integration is intentionally limited.
+
+Runtime-active sections:
+
+- Primary Objective
+- Preferences / Weights
+- Hard Constraints
+- Trade-off Rules
+
+Runtime-inactive sections:
+
+- Decision Principles
+- Evaluation Criteria
+- Reflection Guidance
+
+Parse-only sections:
+
+- Version / Metadata
+
+Current behavior:
+
+- Primary Objective influences score comparison direction only.
+- Preferences / Weights provide the main score distribution used for candidate ranking.
+- Hard Constraints can veto candidates only when the active policy or domain adapter exposes matching constraint checks.
+- Trade-off Rules execute only when they match the constrained v1 subset or are explicitly supported by a policy/domain adapter through candidate rule results.
+- Unsupported runtime semantics must be reported, not guessed or interpreted through natural language.
+
+The primary user-facing validation path is:
+
+```sh
+python -m spice.entry decision explain examples/decision.md --support-json examples/decision_support.json
+```
+
+The default user-local profile flow is:
+
+```sh
+python -m spice.entry decision init
+python -m spice.entry decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
+```
+
+Use this path to inspect:
+
+- loaded artifact id and version
+- validation status
+- runtime-active and runtime-inactive sections
+- supported score dimensions
+- supported hard constraint ids
+- supported trade-off rule ids
+- unsupported score dimensions, constraints, or trade-off rules
+
+Bundled defaults live under `spice/decision/profiles/` and are read-only starter templates.
+User-modified profiles should live outside package code, with `.spice/decision/decision.md` as the default local path.
+
+`default_support.json` and copied support JSON files are reference inputs for explain/demo/debug flows.
+Runtime support should come from the active policy or domain adapter.
+Editing support JSON alone must not be treated as adding runtime capability.
+
 ## Format Principles
 
 `decision.md` should be:
@@ -311,6 +370,13 @@ Hard Constraints:
   severity: veto
 ```
 
+Runtime notes:
+
+- Writing a hard constraint does not make Spice automatically understand how to evaluate it.
+- The active policy or domain adapter must expose a matching constraint id.
+- Candidate decisions must provide pass, fail, or unknown checks for runtime veto behavior.
+- Missing or unsupported constraint ids should be reported by validation and explanation output.
+
 ## Soft Constraints
 
 Purpose: define preferences that influence scoring but do not automatically veto candidates.
@@ -443,6 +509,34 @@ Trade-off Rules:
   enforce: <selection_preference>
   unless: <explicit_exception>
 ```
+
+Runtime-supported subset:
+
+```md
+when: always
+when: never
+when: candidates differ on <scoring_dimension>
+when: all candidates have <scoring_dimension>
+when: any action in [<action>, <action>]
+
+enforce: prefer higher <scoring_dimension>
+enforce: prefer lower <scoring_dimension>
+enforce: prefer higher score_total
+enforce: prefer lower risk
+enforce: prefer higher confidence
+enforce: prefer action in [<action>, <action>]
+
+unless: never
+unless: <supported_when_condition>
+```
+
+Runtime notes:
+
+- Unsupported trade-off rule forms must be reported, not interpreted.
+- Runtime-supported scoring dimensions must be declared by the active policy or domain adapter.
+- Trade-off rule ids may also be supported by explicit policy/domain adapter behavior through candidate-provided rule results.
+- Natural-language trade-off rules are parseable but non-executable unless mapped to the supported subset or candidate-provided rule results.
+- Runtime execution must not use LLM-based interpretation of unsupported prose.
 
 ## Risk Budget
 
