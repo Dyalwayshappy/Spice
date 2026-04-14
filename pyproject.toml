@@ -31,6 +31,7 @@ exclude = ["spice_personal*", "tests*", "docs*", "examples*"]
 
 [tool.setuptools.package-data]
 "spice.entry.assets" = ["*.json"]
+"spice.decision.profiles" = ["*.md", "*.json"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc", "*.pyo", "artifacts/*", ".spice/*", "*.log"]
