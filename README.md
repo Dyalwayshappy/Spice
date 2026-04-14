@@ -297,56 +297,68 @@ spice-runtime --version
 
 
 
+---
+
 ## 🚀 Quick Start
 
-This path starts from a clean clone and moves through the full Spice boundary:
-
-```text
-decision profile -> domain runtime -> OpenRouter/local LLM -> optional external executor
-```
-
-### 1. Run the deterministic core loop
-
-First verify that Spice runs without any model or external agent:
+The fastest way to experience Spice is the integrated quickstart:
 
 ```bash
-python -m spice.entry quickstart --force
+spice quickstart --force
 ```
 
-This writes a runnable scaffold under:
+This starts from the bundled example domain and walks through the full Spice boundary:
 
 ```text
-.spice/quickstart/
+decision.md -> example domain runtime -> OpenRouter/local LLM -> optional external executor
 ```
 
-The generated demo uses the core loop:
+It creates:
+
+```text
+.spice/quickstart/                         # deterministic core-loop example
+.spice/quickstart_llm/                     # LLM-ready example runtime
+.spice/decision/decision.md                # user-editable decision profile
+.spice/decision/support/default_support.json
+```
+
+The generated example runs immediately with deterministic defaults. No API key is required for the first run.
+
+### What The Quickstart Shows
 
 ```text
 perception -> state -> decision -> execution -> reflection
 ```
 
-By default it uses deterministic decision behavior and `MockExecutor`, so it works immediately after installation.
+The default quickstart proves that Spice can:
 
-### 2. Initialize a decision profile
+- load a decision profile
+- validate and explain decision guidance
+- run a domain-specific decision loop
+- attach model advisory through an explicit provider
+- keep execution optional and pluggable
 
-Create the local user-editable decision configuration:
+The bundled quickstart domain is an example. Real projects define their own `DomainSpec`, domain adapter, supported score dimensions, constraint checks, and executor boundary.
+
+### Core-only Mode
+
+If you only want to see the deterministic Spice core loop:
 
 ```bash
-python -m spice.entry decision init
+spice quickstart --core-only --force
 ```
 
-This creates:
+This creates only:
 
 ```text
-.spice/decision/decision.md
-.spice/decision/support/default_support.json
+.spice/quickstart/
 ```
 
-The `decision.md` file is the user-editable profile. The support JSON is a reference for explain/demo/debug flows.
+Use this when you want to inspect the smallest loop without LLM wiring or `decision.md` setup.
 
-### 3. Edit decision.md
+### 1. Edit decision.md
 
-Open:
+The main user-editable file is:
 
 ```text
 .spice/decision/decision.md
@@ -374,10 +386,10 @@ Preferences:
 
 `decision.md` configures decision selection. It is not memory, an agent prompt, or an execution script.
 
-### 4. Validate and explain
+### 2. Validate And Explain
 
 ```bash
-python -m spice.entry decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
+spice decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
 ```
 
 Use `--json` for structured output.
@@ -393,31 +405,14 @@ The explanation shows:
 
 Runtime support comes from the active policy or domain adapter. Editing support JSON alone does not add runtime capability.
 
-### 5. Generate a domain runtime with model wiring
+### 3. Use OpenRouter
 
-Use the quickstart DomainSpec to generate an LLM-ready domain scaffold:
-
-```bash
-python -m spice.entry init domain quickstart_llm \
-  --from-spec .spice/quickstart/domain_spec.json \
-  --output .spice/quickstart_llm \
-  --with-llm \
-  --force
-```
-
-Run it with the deterministic built-in model stub:
-
-```bash
-cd .spice/quickstart_llm
-python run_demo.py
-```
-
-Attach a hosted model through OpenRouter:
+Attach a hosted model to the generated example runtime:
 
 ```bash
 export OPENROUTER_API_KEY="your-openrouter-api-key"
 export SPICE_DOMAIN_MODEL="openrouter:anthropic/claude-3.5-sonnet"
-python run_demo.py
+python .spice/quickstart_llm/run_demo.py
 ```
 
 Optional OpenRouter attribution headers:
@@ -427,10 +422,10 @@ export SPICE_OPENROUTER_SITE_URL="https://github.com/Dyalwayshappy/Spice"
 export SPICE_OPENROUTER_APP_NAME="Spice"
 ```
 
-Attach a local or custom model through the subprocess LLM provider:
+### 4. Use A Local Or Custom Model
 
 ```bash
-SPICE_DOMAIN_MODEL="ollama run qwen2.5" python run_demo.py
+SPICE_DOMAIN_MODEL="ollama run qwen2.5" python .spice/quickstart_llm/run_demo.py
 ```
 
 Model selection is explicit:
@@ -439,17 +434,11 @@ Model selection is explicit:
 - `openrouter:<model-id>` uses the OpenRouter provider
 - any other value is treated as a subprocess command
 
-Any subprocess command must read a prompt from stdin and return structured model output. The generated scaffold keeps model selection explicit through `SPICE_DOMAIN_MODEL`; Spice does not auto-load hidden model configuration in v1.
+Any subprocess command must read a prompt from stdin and return structured model output. Spice does not auto-load hidden model configuration in v1.
 
-Return to the repo root when finished:
+### 5. Use decision.md In Runtime Code
 
-```bash
-cd ../..
-```
-
-### 6. Attach decision.md explicitly in runtime code
-
-Spice does not auto-load hidden project state in v1. Attach a profile explicitly:
+The quickstart shows the file-based configuration flow. In application code, attach the profile explicitly:
 
 ```python
 from spice.decision import guided_policy_from_profile
@@ -462,7 +451,7 @@ policy = guided_policy_from_profile(
 
 The active policy/domain adapter remains the source of runtime capability.
 
-### 7. Connect an external execution agent
+### 6. Connect An External Execution Agent
 
 Models help Spice reason, simulate, and advise. External agents execute when you choose to connect them.
 
@@ -483,6 +472,19 @@ For production integrations, use one of the executor boundaries:
 - `SDEPExecutor` for external agent processes that speak the Spice Decision Execution Protocol
 
 Execution is optional and pluggable. It is not mixed into `decision.md`.
+
+### 7. Latest User Experience Flow
+
+```text
+1. clone and install Spice
+2. run spice quickstart
+3. edit .spice/decision/decision.md
+4. validate with spice decision explain
+5. choose OpenRouter, deterministic, or local subprocess model
+6. run the example domain
+7. replace the example domain with your own DomainSpec/domain adapter
+8. optionally connect external executors or SDEP agents
+```
 
 
 
