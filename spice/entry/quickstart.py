@@ -10,12 +10,23 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from spice.decision import (
+    DEFAULT_LOCAL_DECISION_PROFILE,
+    DEFAULT_LOCAL_SUPPORT_PROFILE,
+    DecisionProfileInitReport,
+    explain_decision_guidance,
+    init_decision_profile,
+    load_default_decision_support,
+)
+from spice.entry.init_domain import InitDomainReport, run_init_domain_from_spec
 from spice.entry.scaffold import write_scaffold
 from spice.entry.spec import DomainSpec
 
 
 QUICKSTART_DEFAULT_OUTPUT = Path(".spice/quickstart")
+QUICKSTART_LLM_DEFAULT_OUTPUT = Path(".spice/quickstart_llm")
 QUICKSTART_REPORT_SCHEMA_VERSION = "spice.quickstart.report.v1"
+INTEGRATED_QUICKSTART_REPORT_SCHEMA_VERSION = "spice.quickstart.integrated_report.v1"
 
 
 @dataclass(slots=True)
@@ -44,6 +55,23 @@ class QuickstartReport:
             "stdout_log_path": str(self.stdout_log_path),
             "stderr_log_path": str(self.stderr_log_path),
             "last_cycle": dict(self.last_cycle) if isinstance(self.last_cycle, dict) else None,
+        }
+
+
+@dataclass(slots=True)
+class IntegratedQuickstartReport:
+    core_report: QuickstartReport
+    decision_profile_report: DecisionProfileInitReport
+    decision_explain_report: dict[str, Any]
+    llm_report: InitDomainReport
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": INTEGRATED_QUICKSTART_REPORT_SCHEMA_VERSION,
+            "core": self.core_report.to_dict(),
+            "decision_profile": self.decision_profile_report.to_payload(),
+            "decision_explain": dict(self.decision_explain_report),
+            "llm_runtime": self.llm_report.to_dict(),
         }
 
 
@@ -113,6 +141,70 @@ def run_quickstart(
     return report
 
 
+def run_integrated_quickstart(
+    *,
+    output_dir: str | Path = QUICKSTART_DEFAULT_OUTPUT,
+    llm_output_dir: str | Path = QUICKSTART_LLM_DEFAULT_OUTPUT,
+    decision_profile_path: str | Path = DEFAULT_LOCAL_DECISION_PROFILE,
+    support_output_path: str | Path = DEFAULT_LOCAL_SUPPORT_PROFILE,
+    force: bool = False,
+    no_run: bool = False,
+) -> IntegratedQuickstartReport:
+    output_path = Path(output_dir)
+    llm_output_path = Path(llm_output_dir)
+    profile_path = Path(decision_profile_path)
+    support_path = Path(support_output_path)
+    _preflight_integrated_outputs(
+        paths=(output_path, llm_output_path, profile_path, support_path),
+        force=force,
+    )
+
+    core_report = run_quickstart(
+        output_dir=output_path,
+        force=force,
+        no_run=no_run,
+    )
+    decision_profile_report = init_decision_profile(
+        output=profile_path,
+        support_output=support_path,
+        force=force,
+        include_support=True,
+    )
+    decision_explain_report = explain_decision_guidance(
+        decision_profile_report.profile_path,
+        support=load_default_decision_support(),
+    )
+    llm_report = run_init_domain_from_spec(
+        spec=load_builtin_quickstart_spec(),
+        output_dir=llm_output_path,
+        force=force,
+        no_run=no_run,
+        with_llm=True,
+        interactive=False,
+        from_spec_path=core_report.domain_spec_path,
+    )
+
+    artifacts_dir = output_path / "artifacts"
+    integrated_summary_path = artifacts_dir / "integrated_quickstart_summary.json"
+    integrated_report = IntegratedQuickstartReport(
+        core_report=core_report,
+        decision_profile_report=decision_profile_report,
+        decision_explain_report=decision_explain_report,
+        llm_report=llm_report,
+    )
+    integrated_summary_path.write_text(
+        json.dumps(
+            integrated_report.to_dict(),
+            ensure_ascii=True,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return integrated_report
+
+
 def _prepare_output_dir(output_dir: Path, *, force: bool) -> None:
     if output_dir.exists():
         if not force:
@@ -122,6 +214,17 @@ def _prepare_output_dir(output_dir: Path, *, force: bool) -> None:
             )
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+
+def _preflight_integrated_outputs(*, paths: tuple[Path, ...], force: bool) -> None:
+    if force:
+        return
+    existing = [path for path in paths if path.exists()]
+    if existing:
+        rendered = ", ".join(str(path) for path in existing)
+        raise FileExistsError(
+            f"Quickstart output already exists: {rendered}. Use --force to replace it."
+        )
 
 
 def _run_generated_demo(
