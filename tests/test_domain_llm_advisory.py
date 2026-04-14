@@ -5,6 +5,7 @@ import unittest
 from spice.decision import CandidateDecision, DecisionObjective
 from spice.llm.services.domain_advisory import (
     DOMAIN_ADVISORY_ATTRIBUTE_KEYS,
+    _resolve_domain_model_override,
     build_domain_llm_decision_policy,
 )
 from spice.protocols import WorldState
@@ -62,6 +63,20 @@ class DomainLLMAdvisoryPolicyTests(unittest.TestCase):
         )
         for key in DOMAIN_ADVISORY_ATTRIBUTE_KEYS:
             self.assertIn(key, degraded.attributes)
+
+    def test_domain_model_override_supports_openrouter_prefix(self) -> None:
+        override = _resolve_domain_model_override("openrouter:anthropic/claude-3.5-sonnet")
+        self.assertIsNotNone(override)
+        assert override is not None
+        self.assertEqual(override.provider_id, "openrouter")
+        self.assertEqual(override.model_id, "anthropic/claude-3.5-sonnet")
+
+    def test_domain_model_override_preserves_subprocess_default(self) -> None:
+        override = _resolve_domain_model_override("ollama run qwen2.5")
+        self.assertIsNotNone(override)
+        assert override is not None
+        self.assertEqual(override.provider_id, "subprocess")
+        self.assertEqual(override.model_id, "ollama run qwen2.5")
 
 
 if __name__ == "__main__":
