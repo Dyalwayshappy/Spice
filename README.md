@@ -297,13 +297,39 @@ spice-runtime --version
 
 
 
----
-
 ## 🚀 Quick Start
 
-Spice starts with an explicit local decision profile.
+This path starts from a clean clone and moves through the full Spice boundary:
 
-### 1. Initialize a decision profile
+```text
+decision profile -> domain runtime -> OpenRouter/local LLM -> optional external executor
+```
+
+### 1. Run the deterministic core loop
+
+First verify that Spice runs without any model or external agent:
+
+```bash
+python -m spice.entry quickstart --force
+```
+
+This writes a runnable scaffold under:
+
+```text
+.spice/quickstart/
+```
+
+The generated demo uses the core loop:
+
+```text
+perception -> state -> decision -> execution -> reflection
+```
+
+By default it uses deterministic decision behavior and `MockExecutor`, so it works immediately after installation.
+
+### 2. Initialize a decision profile
+
+Create the local user-editable decision configuration:
 
 ```bash
 python -m spice.entry decision init
@@ -318,7 +344,7 @@ This creates:
 
 The `decision.md` file is the user-editable profile. The support JSON is a reference for explain/demo/debug flows.
 
-### 2. Edit decision.md
+### 3. Edit decision.md
 
 Open:
 
@@ -346,7 +372,9 @@ Preferences:
 - confidence_alignment: 0.15
 ```
 
-### 3. Validate and explain
+`decision.md` configures decision selection. It is not memory, an agent prompt, or an execution script.
+
+### 4. Validate and explain
 
 ```bash
 python -m spice.entry decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
@@ -363,7 +391,63 @@ The explanation shows:
 - supported and unsupported hard constraints
 - supported and unsupported trade-off rules
 
-### 4. Attach explicitly in runtime code
+Runtime support comes from the active policy or domain adapter. Editing support JSON alone does not add runtime capability.
+
+### 5. Generate a domain runtime with model wiring
+
+Use the quickstart DomainSpec to generate an LLM-ready domain scaffold:
+
+```bash
+python -m spice.entry init domain quickstart_llm \
+  --from-spec .spice/quickstart/domain_spec.json \
+  --output .spice/quickstart_llm \
+  --with-llm \
+  --force
+```
+
+Run it with the deterministic built-in model stub:
+
+```bash
+cd .spice/quickstart_llm
+python run_demo.py
+```
+
+Attach a hosted model through OpenRouter:
+
+```bash
+export OPENROUTER_API_KEY="your-openrouter-api-key"
+export SPICE_DOMAIN_MODEL="openrouter:anthropic/claude-3.5-sonnet"
+python run_demo.py
+```
+
+Optional OpenRouter attribution headers:
+
+```bash
+export SPICE_OPENROUTER_SITE_URL="https://github.com/Dyalwayshappy/Spice"
+export SPICE_OPENROUTER_APP_NAME="Spice"
+```
+
+Attach a local or custom model through the subprocess LLM provider:
+
+```bash
+SPICE_DOMAIN_MODEL="ollama run qwen2.5" python run_demo.py
+```
+
+Model selection is explicit:
+
+- `deterministic` uses the built-in deterministic provider
+- `openrouter:<model-id>` uses the OpenRouter provider
+- any other value is treated as a subprocess command
+
+Any subprocess command must read a prompt from stdin and return structured model output. The generated scaffold keeps model selection explicit through `SPICE_DOMAIN_MODEL`; Spice does not auto-load hidden model configuration in v1.
+
+Return to the repo root when finished:
+
+```bash
+cd ../..
+```
+
+### 6. Attach decision.md explicitly in runtime code
 
 Spice does not auto-load hidden project state in v1. Attach a profile explicitly:
 
@@ -378,13 +462,27 @@ policy = guided_policy_from_profile(
 
 The active policy/domain adapter remains the source of runtime capability.
 
-### 5. Connect execution only when needed
+### 7. Connect an external execution agent
 
-Spice decides what should be done. External agents execute when you choose to connect them.
+Models help Spice reason, simulate, and advise. External agents execute when you choose to connect them.
 
-Decision → Execution → Outcome → Reflection
+```text
+Decision -> ExecutionIntent -> external agent -> ExecutionResult -> Outcome -> Reflection
+```
 
-Execution is optional and pluggable. It is not the core user configuration surface.
+Run the included SDEP execution demo:
+
+```bash
+python examples/sdep_agent_demo/run_sdep_adapter_demo.py
+```
+
+For production integrations, use one of the executor boundaries:
+
+- `MockExecutor` for local/demo runs
+- `CLIAdapterExecutor` for command-line tools
+- `SDEPExecutor` for external agent processes that speak the Spice Decision Execution Protocol
+
+Execution is optional and pluggable. It is not mixed into `decision.md`.
 
 
 
