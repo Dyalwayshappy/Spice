@@ -22,7 +22,7 @@ class QuickstartCLITests(unittest.TestCase):
             stdout_buffer = io.StringIO()
             with redirect_stdout(stdout_buffer):
                 exit_code = spice_cli_main(
-                    ["quickstart", "--output", str(output_dir), "--no-run"]
+                    ["quickstart", "--core-only", "--output", str(output_dir), "--no-run"]
                 )
 
             self.assertEqual(exit_code, 0)
@@ -32,6 +32,7 @@ class QuickstartCLITests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             output_dir = Path(tmp_dir) / "quickstart_out"
             completed = self._run_quickstart(
+                "--core-only",
                 "--output",
                 str(output_dir),
                 "--no-run",
@@ -55,7 +56,7 @@ class QuickstartCLITests(unittest.TestCase):
     def test_quickstart_run_reports_action_and_operation_mapping(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             output_dir = Path(tmp_dir) / "quickstart_run"
-            completed = self._run_quickstart("--output", str(output_dir))
+            completed = self._run_quickstart("--core-only", "--output", str(output_dir))
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("domain_action_id=", completed.stdout)
@@ -81,15 +82,102 @@ class QuickstartCLITests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             output_dir = Path(tmp_dir) / "quickstart_force"
 
-            first = self._run_quickstart("--output", str(output_dir), "--no-run")
+            first = self._run_quickstart(
+                "--core-only",
+                "--output",
+                str(output_dir),
+                "--no-run",
+            )
             self.assertEqual(first.returncode, 0, first.stderr)
 
-            second = self._run_quickstart("--output", str(output_dir), "--no-run")
+            second = self._run_quickstart(
+                "--core-only",
+                "--output",
+                str(output_dir),
+                "--no-run",
+            )
             self.assertNotEqual(second.returncode, 0)
             self.assertIn("already exists", second.stderr)
 
-            third = self._run_quickstart("--output", str(output_dir), "--no-run", "--force")
+            third = self._run_quickstart(
+                "--core-only",
+                "--output",
+                str(output_dir),
+                "--no-run",
+                "--force",
+            )
             self.assertEqual(third.returncode, 0, third.stderr)
+
+    def test_default_quickstart_generates_decision_profile_and_llm_runtime(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            root = Path(tmp_dir)
+            core_dir = root / "quickstart"
+            llm_dir = root / "quickstart_llm"
+            profile_path = root / ".spice" / "decision" / "decision.md"
+            support_path = root / ".spice" / "decision" / "support" / "default_support.json"
+
+            completed = self._run_quickstart(
+                "--output",
+                str(core_dir),
+                "--llm-output",
+                str(llm_dir),
+                "--decision-profile",
+                str(profile_path),
+                "--support-output",
+                str(support_path),
+                "--no-run",
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("Quickstart complete.", completed.stdout)
+            self.assertIn("Use OpenRouter with the example runtime", completed.stdout)
+            self.assertIn("Real projects define their own DomainSpec", completed.stdout)
+            self.assertTrue((core_dir / "domain_spec.json").exists())
+            self.assertTrue((llm_dir / "run_demo.py").exists())
+            self.assertTrue(profile_path.exists())
+            self.assertTrue(support_path.exists())
+
+            summary_path = core_dir / "artifacts" / "integrated_quickstart_summary.json"
+            self.assertTrue(summary_path.exists())
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                summary["schema_version"],
+                "spice.quickstart.integrated_report.v1",
+            )
+            self.assertEqual(summary["decision_profile"]["profile_path"], str(profile_path))
+            self.assertEqual(summary["llm_runtime"]["output_dir"], str(llm_dir))
+
+    def test_default_quickstart_requires_force_before_partial_write(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            root = Path(tmp_dir)
+            core_dir = root / "quickstart"
+            llm_dir = root / "quickstart_llm"
+            profile_path = root / ".spice" / "decision" / "decision.md"
+            support_path = root / ".spice" / "decision" / "support" / "default_support.json"
+            profile_path.parent.mkdir(parents=True, exist_ok=True)
+            profile_path.write_text("# existing\n", encoding="utf-8")
+
+            completed = self._run_quickstart(
+                "--output",
+                str(core_dir),
+                "--llm-output",
+                str(llm_dir),
+                "--decision-profile",
+                str(profile_path),
+                "--support-output",
+                str(support_path),
+                "--no-run",
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("Use --force", completed.stderr)
+            self.assertFalse(core_dir.exists())
+            self.assertFalse(llm_dir.exists())
+
+    def test_spice_console_script_is_declared(self) -> None:
+        pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn("[project.scripts]", pyproject)
+        self.assertIn('spice = "spice.entry.cli:main"', pyproject)
 
     @staticmethod
     def _run_quickstart(*args: str) -> subprocess.CompletedProcess[str]:
