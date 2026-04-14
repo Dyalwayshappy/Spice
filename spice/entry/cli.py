@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
+from spice.decision import (
+    DEFAULT_LOCAL_DECISION_PROFILE,
+    DecisionGuidanceSupport,
+    explain_decision_guidance,
+    format_decision_guidance_explanation,
+    init_decision_profile,
+)
 from spice.entry.assist import (
     ASSIST_MAX_TRIES_DEFAULT,
     capture_brief,
@@ -43,6 +51,61 @@ def build_parser() -> argparse.ArgumentParser:
         help="Generate scaffold and artifacts but skip executing run_demo.py.",
     )
     quickstart.set_defaults(handler=_handle_quickstart)
+
+    decision_parser = subparsers.add_parser(
+        "decision",
+        help="Inspect decision.md guidance.",
+    )
+    decision_subparsers = decision_parser.add_subparsers(
+        dest="decision_command",
+        required=True,
+    )
+    decision_init = decision_subparsers.add_parser(
+        "init",
+        help="Copy the bundled default decision profile into this project.",
+    )
+    decision_init.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_LOCAL_DECISION_PROFILE,
+        help="Local decision profile path (default: .spice/decision/decision.md).",
+    )
+    decision_init.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing local decision profile and copied support reference.",
+    )
+    decision_init.add_argument(
+        "--no-support",
+        action="store_true",
+        help="Do not copy the reference support JSON used for explain/demo/debug flows.",
+    )
+    decision_init.set_defaults(handler=_handle_decision_init)
+
+    decision_explain = decision_subparsers.add_parser(
+        "explain",
+        help="Validate and explain a decision.md file.",
+    )
+    decision_explain.add_argument(
+        "path",
+        type=Path,
+        help="Path to decision.md.",
+    )
+    decision_explain.add_argument(
+        "--support-json",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON file declaring score_dimensions, constraint_ids, "
+            "and tradeoff_rule_ids supported by the active policy/domain adapter."
+        ),
+    )
+    decision_explain.add_argument(
+        "--json",
+        action="store_true",
+        help="Print structured JSON instead of the concise text report.",
+    )
+    decision_explain.set_defaults(handler=_handle_decision_explain)
 
     init_parser = subparsers.add_parser(
         "init",
@@ -176,6 +239,73 @@ def _handle_quickstart(args: argparse.Namespace) -> int:
     except Exception as exc:
         print(f"quickstart failed: {exc}", file=sys.stderr)
         return 1
+
+
+def _handle_decision_explain(args: argparse.Namespace) -> int:
+    try:
+        support_source = str(args.support_json) if args.support_json is not None else ""
+        support = (
+            _load_decision_guidance_support(args.support_json)
+            if args.support_json is not None
+            else None
+        )
+        report = explain_decision_guidance(args.path, support=support)
+        if support_source:
+            report["support_contract"]["source"] = support_source
+            report["support_contract"]["role"] = (
+                "explain/debug input; runtime authority should come from the active policy/domain adapter"
+            )
+        if bool(args.json):
+            print(json.dumps(report, indent=2, sort_keys=True))
+        else:
+            print(format_decision_guidance_explanation(report))
+            if support_source:
+                print()
+                print(
+                    "Support note: --support-json is for explain/debug. "
+                    "Runtime capability should come from the active policy/domain adapter."
+                )
+        return 0
+    except Exception as exc:
+        print(f"decision explain failed: {exc}", file=sys.stderr)
+        return 1
+
+
+def _handle_decision_init(args: argparse.Namespace) -> int:
+    try:
+        report = init_decision_profile(
+            output=args.output,
+            force=bool(args.force),
+            include_support=not bool(args.no_support),
+        )
+        print("Decision profile initialized.")
+        print(f"profile_path={report.profile_path}")
+        if report.support_path is not None:
+            print(f"support_reference_path={report.support_path}")
+            print(
+                "support_reference_role=explain/debug only; runtime support comes from the active policy/domain adapter"
+            )
+        print()
+        print("Next steps:")
+        if report.support_path is not None:
+            print(
+                "  python -m spice.entry decision explain "
+                f"{report.profile_path} --support-json {report.support_path}"
+            )
+        else:
+            print(f"  python -m spice.entry decision explain {report.profile_path}")
+        print("  Use guided_policy_from_profile(base_policy, profile_path) in Python runtime code.")
+        return 0
+    except Exception as exc:
+        print(f"decision init failed: {exc}", file=sys.stderr)
+        return 1
+
+
+def _load_decision_guidance_support(path: Path) -> DecisionGuidanceSupport:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("support JSON must be an object.")
+    return DecisionGuidanceSupport.from_dict(payload)
 
 
 def _handle_init_domain(args: argparse.Namespace) -> int:
