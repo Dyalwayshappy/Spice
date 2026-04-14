@@ -28,7 +28,12 @@ from spice.llm.core import (
     LLMTaskHook,
     ProviderRegistry,
 )
-from spice.llm.providers import DeterministicLLMProvider, SubprocessLLMProvider
+from spice.llm.providers import (
+    DeterministicLLMProvider,
+    OpenRouterLLMProvider,
+    SubprocessLLMProvider,
+)
+from spice.llm.services.model_override import resolve_llm_model_override
 from spice.protocols import Decision, WorldState
 
 
@@ -294,6 +299,7 @@ def _build_domain_llm_client(*, allowed_actions: tuple[str, ...]) -> LLMClient:
     registry = (
         ProviderRegistry.empty()
         .register(stub_provider)
+        .register(OpenRouterLLMProvider())
         .register(SubprocessLLMProvider())
     )
     return LLMClient(registry=registry, router=router)
@@ -301,19 +307,9 @@ def _build_domain_llm_client(*, allowed_actions: tuple[str, ...]) -> LLMClient:
 
 def _resolve_domain_model_override(model: str | None) -> LLMModelConfigOverride | None:
     raw = model if model is not None else os.environ.get(DOMAIN_MODEL_ENV)
-    if raw is None:
-        return None
-    token = raw.strip()
-    if not token:
-        return None
-    if token.lower() == "deterministic":
-        return LLMModelConfigOverride(
-            provider_id="deterministic",
-            model_id="deterministic.domain.stub.v1",
-        )
-    return LLMModelConfigOverride(
-        provider_id="subprocess",
-        model_id=token,
+    return resolve_llm_model_override(
+        raw,
+        deterministic_model_id="deterministic.domain.stub.v1",
     )
 
 
