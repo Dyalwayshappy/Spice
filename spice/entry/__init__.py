@@ -17,7 +17,14 @@ from spice.entry.spec import (
     load_domain_spec,
 )
 from spice.entry.scaffold import render_scaffold_files, write_scaffold
-from spice.entry.quickstart import QUICKSTART_DEFAULT_OUTPUT, QuickstartReport, run_quickstart
+from spice.entry.quickstart import (
+    QUICKSTART_DEFAULT_OUTPUT,
+    QUICKSTART_LLM_DEFAULT_OUTPUT,
+    IntegratedQuickstartReport,
+    QuickstartReport,
+    run_integrated_quickstart,
+    run_quickstart,
+)
 from spice.entry.init_domain import InitDomainReport, run_init_domain
 
 __all__ = [
@@ -40,7 +47,10 @@ __all__ = [
     "render_scaffold_files",
     "write_scaffold",
     "QUICKSTART_DEFAULT_OUTPUT",
+    "QUICKSTART_LLM_DEFAULT_OUTPUT",
+    "IntegratedQuickstartReport",
     "QuickstartReport",
+    "run_integrated_quickstart",
     "run_quickstart",
     "InitDomainReport",
     "run_init_domain",
