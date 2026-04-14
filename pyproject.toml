@@ -22,6 +22,9 @@ dependencies = []
 Homepage = "https://github.com/Dyalwayshappy/Spice"
 Repository = "https://github.com/Dyalwayshappy/Spice"
 
+[project.scripts]
+spice = "spice.entry.cli:main"
+
 [tool.setuptools]
 include-package-data = true
 
