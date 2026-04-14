@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from spice.entry.assist import _resolve_assist_model_override
 from spice.entry.cli import main as spice_cli_main
 
 
@@ -17,6 +18,13 @@ QUICKSTART_SPEC = REPO_ROOT / "spice" / "entry" / "assets" / "quickstart.domain_
 
 
 class InitDomainAssistTests(unittest.TestCase):
+    def test_assist_model_override_supports_openrouter_prefix(self) -> None:
+        override = _resolve_assist_model_override("openrouter:openai/gpt-4o-mini")
+        self.assertIsNotNone(override)
+        assert override is not None
+        self.assertEqual(override.provider_id, "openrouter")
+        self.assertEqual(override.model_id, "openai/gpt-4o-mini")
+
     def test_assist_rejects_from_spec_combination(self) -> None:
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
             output_dir = Path(tmp_dir) / "assist_from_spec_forbidden"
