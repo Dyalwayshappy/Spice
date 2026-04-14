@@ -1,0 +1,215 @@
+from __future__ import annotations
+
+import io
+import json
+import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+
+from spice.core import SpiceRuntime
+from spice.decision import (
+    CandidateDecision,
+    DecisionGuidanceSupport,
+    PolicyIdentity,
+    explain_decision_guidance,
+    guided_policy_from_profile,
+    init_decision_profile,
+    load_default_decision_guidance,
+    load_default_decision_support,
+)
+from spice.entry.cli import main as spice_cli_main
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+class DecisionProfileTests(unittest.TestCase):
+    def test_bundled_default_profile_loads_and_explains(self) -> None:
+        guidance = load_default_decision_guidance()
+        support = load_default_decision_support()
+
+        report = explain_decision_guidance(guidance, support=support)
+
+        self.assertEqual(guidance.artifact_id, "decision.default.general")
+        self.assertEqual(report["validation"]["status"], "valid")
+        self.assertEqual(
+            report["unsupported"],
+            {
+                "score_dimensions": [],
+                "constraint_ids": [],
+                "tradeoff_rules": [],
+            },
+        )
+
+    def test_decision_init_copies_local_profile_and_support_safely(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            output = Path(tmp_dir) / ".spice" / "decision" / "decision.md"
+            stdout_buffer = io.StringIO()
+            with redirect_stdout(stdout_buffer):
+                exit_code = spice_cli_main(["decision", "init", "--output", str(output)])
+
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(output.exists())
+            support_path = output.parent / "support" / "default_support.json"
+            self.assertTrue(support_path.exists())
+            self.assertIn("Decision profile initialized.", stdout_buffer.getvalue())
+
+            stderr_buffer = io.StringIO()
+            with redirect_stderr(stderr_buffer):
+                second_exit = spice_cli_main(["decision", "init", "--output", str(output)])
+
+            self.assertNotEqual(second_exit, 0)
+            self.assertIn("already exists", stderr_buffer.getvalue())
+
+            with redirect_stdout(io.StringIO()):
+                forced_exit = spice_cli_main(
+                    ["decision", "init", "--output", str(output), "--force"]
+                )
+
+            self.assertEqual(forced_exit, 0)
+
+    def test_explain_works_on_initialized_local_profile(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            output = Path(tmp_dir) / ".spice" / "decision" / "decision.md"
+            report = init_decision_profile(output=output)
+            stdout_buffer = io.StringIO()
+            with redirect_stdout(stdout_buffer):
+                exit_code = spice_cli_main(
+                    [
+                        "decision",
+                        "explain",
+                        str(report.profile_path),
+                        "--support-json",
+                        str(report.support_path),
+                        "--json",
+                    ]
+                )
+
+            self.assertEqual(exit_code, 0)
+            payload = json.loads(stdout_buffer.getvalue())
+            self.assertEqual(payload["validation"]["status"], "valid")
+            self.assertEqual(payload["artifact"]["artifact_id"], "decision.default.general")
+            self.assertEqual(
+                payload["support_contract"]["role"],
+                "explain/debug input; runtime authority should come from the active policy/domain adapter",
+            )
+
+    def test_explicit_runtime_profile_usage_changes_selection(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            output = Path(tmp_dir) / ".spice" / "decision" / "decision.md"
+            init_decision_profile(output=output)
+            policy = guided_policy_from_profile(_DefaultProfilePolicy(), output)
+            runtime = SpiceRuntime(decision_policy=policy)
+
+            decision = runtime.decide()
+            trace = runtime.latest_decision_trace
+
+            self.assertIsNotNone(trace)
+            self.assertEqual(decision.selected_action, "safe_action")
+            self.assertEqual(trace.metadata["decision_guidance"]["source_path"], str(output))
+            self.assertIn(
+                "prefer_lower_risk_when_candidates_differ",
+                trace.metadata["applied_tradeoff_rules"],
+            )
+
+    def test_active_policy_support_contract_is_authoritative(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as tmp_dir:
+            output = Path(tmp_dir) / ".spice" / "decision" / "decision.md"
+            report = init_decision_profile(output=output)
+            self.assertTrue(report.support_path and report.support_path.exists())
+
+            policy = guided_policy_from_profile(_LimitedSupportPolicy(), output)
+            runtime = SpiceRuntime(decision_policy=policy)
+            runtime.decide()
+            trace = runtime.latest_decision_trace
+
+            self.assertIsNotNone(trace)
+            support = trace.metadata["decision_guidance_support"]
+            self.assertEqual(support["score_dimensions"], ["outcome_value"])
+            self.assertNotIn("risk_reduction", support["score_dimensions"])
+            issue_codes = {
+                issue["code"]
+                for issue in trace.metadata["decision_guidance_validation"]["issues"]
+            }
+            self.assertIn("unsupported_score_dimension", issue_codes)
+
+
+class _DefaultProfilePolicy:
+    identity = PolicyIdentity.create(
+        policy_name="tests.default_profile_policy",
+        policy_version="0.1",
+        implementation_fingerprint="default-profile-policy-v1",
+    )
+    decision_guidance_support = DecisionGuidanceSupport(
+        score_dimensions={
+            "outcome_value",
+            "risk_reduction",
+            "reversibility",
+            "confidence_alignment",
+        },
+        constraint_ids={"no_declared_veto_violation"},
+    )
+
+    def propose(self, state, context):
+        return _default_profile_candidates()
+
+    def select(self, candidates, objective, constraints):
+        raise AssertionError("GuidedDecisionPolicy should own selection")
+
+
+class _LimitedSupportPolicy(_DefaultProfilePolicy):
+    identity = PolicyIdentity.create(
+        policy_name="tests.limited_default_profile_policy",
+        policy_version="0.1",
+        implementation_fingerprint="limited-default-profile-policy-v1",
+    )
+    decision_guidance_support = DecisionGuidanceSupport(
+        score_dimensions={"outcome_value"},
+        constraint_ids={"no_declared_veto_violation"},
+    )
+
+
+def _default_profile_candidates() -> list[CandidateDecision]:
+    return [
+        CandidateDecision(
+            id="candidate.risky",
+            action="risky_action",
+            params={
+                "constraint_checks": {
+                    "no_declared_veto_violation": "pass",
+                },
+            },
+            score_total=0.95,
+            score_breakdown={
+                "outcome_value": 1.0,
+                "risk_reduction": 0.1,
+                "reversibility": 0.2,
+                "confidence_alignment": 0.4,
+            },
+            risk=0.8,
+            confidence=0.4,
+        ),
+        CandidateDecision(
+            id="candidate.safe",
+            action="safe_action",
+            params={
+                "constraint_checks": {
+                    "no_declared_veto_violation": "pass",
+                },
+            },
+            score_total=0.20,
+            score_breakdown={
+                "outcome_value": 0.6,
+                "risk_reduction": 0.9,
+                "reversibility": 0.9,
+                "confidence_alignment": 0.9,
+            },
+            risk=0.2,
+            confidence=0.9,
+        ),
+    ]
+
+
+if __name__ == "__main__":
+    unittest.main()
