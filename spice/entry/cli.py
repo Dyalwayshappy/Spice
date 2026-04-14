@@ -7,6 +7,7 @@ from pathlib import Path
 
 from spice.decision import (
     DEFAULT_LOCAL_DECISION_PROFILE,
+    DEFAULT_LOCAL_SUPPORT_PROFILE,
     DecisionGuidanceSupport,
     explain_decision_guidance,
     format_decision_guidance_explanation,
@@ -20,7 +21,14 @@ from spice.entry.assist import (
     write_assist_artifacts,
 )
 from spice.entry.init_domain import run_init_domain, run_init_domain_from_spec
-from spice.entry.quickstart import QUICKSTART_DEFAULT_OUTPUT, run_quickstart
+from spice.entry.quickstart import (
+    QUICKSTART_DEFAULT_OUTPUT,
+    QUICKSTART_LLM_DEFAULT_OUTPUT,
+    IntegratedQuickstartReport,
+    QuickstartReport,
+    run_integrated_quickstart,
+    run_quickstart,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,23 +40,58 @@ def build_parser() -> argparse.ArgumentParser:
 
     quickstart = subparsers.add_parser(
         "quickstart",
-        help="Run the deterministic Spice first-success quickstart flow.",
+        help="Run the Spice quickstart flow.",
     )
     quickstart.add_argument(
         "--output",
         type=Path,
         default=QUICKSTART_DEFAULT_OUTPUT,
-        help="Output directory for generated quickstart scaffold (default: .spice/quickstart).",
+        help=(
+            "Output directory for the core example scaffold "
+            "(default: .spice/quickstart)."
+        ),
+    )
+    quickstart.add_argument(
+        "--llm-output",
+        type=Path,
+        default=QUICKSTART_LLM_DEFAULT_OUTPUT,
+        help=(
+            "Output directory for the LLM-ready example runtime "
+            "(default: .spice/quickstart_llm)."
+        ),
+    )
+    quickstart.add_argument(
+        "--decision-profile",
+        type=Path,
+        default=DEFAULT_LOCAL_DECISION_PROFILE,
+        help=(
+            "Local decision.md path for the full quickstart "
+            "(default: .spice/decision/decision.md)."
+        ),
+    )
+    quickstart.add_argument(
+        "--support-output",
+        type=Path,
+        default=DEFAULT_LOCAL_SUPPORT_PROFILE,
+        help=(
+            "Reference support JSON path for the full quickstart "
+            "(default: .spice/decision/support/default_support.json)."
+        ),
     )
     quickstart.add_argument(
         "--force",
         action="store_true",
-        help="Replace existing quickstart output directory.",
+        help="Replace existing quickstart output paths.",
     )
     quickstart.add_argument(
         "--no-run",
         action="store_true",
-        help="Generate scaffold and artifacts but skip executing run_demo.py.",
+        help="Generate files and artifacts but skip executing run_demo.py.",
+    )
+    quickstart.add_argument(
+        "--core-only",
+        action="store_true",
+        help="Run only the deterministic core-loop quickstart.",
     )
     quickstart.set_defaults(handler=_handle_quickstart)
 
@@ -197,48 +240,138 @@ def main(argv: list[str] | None = None) -> int:
 
 def _handle_quickstart(args: argparse.Namespace) -> int:
     output_dir: Path = args.output
+    llm_output_dir: Path = args.llm_output
+    decision_profile: Path = args.decision_profile
+    support_output: Path = args.support_output
     force = bool(args.force)
     no_run = bool(args.no_run)
+    core_only = bool(args.core_only)
     try:
-        print("[1/6] Load built-in DomainSpec ... OK")
-        print("[2/6] Validate DomainSpec ... OK (schema_version=spice.domain_spec.v1)")
-        print("[3/6] Render deterministic scaffold ... OK")
-        report = run_quickstart(
+        if core_only:
+            report = run_quickstart(
+                output_dir=output_dir,
+                force=force,
+                no_run=no_run,
+            )
+            _print_core_quickstart_report(report)
+            return 0
+
+        report = run_integrated_quickstart(
             output_dir=output_dir,
+            llm_output_dir=llm_output_dir,
+            decision_profile_path=decision_profile,
+            support_output_path=support_output,
             force=force,
             no_run=no_run,
         )
-        print(
-            "[4/6] Write scaffold ... OK "
-            f"({len(report.scaffold_files)} files -> {report.output_dir})"
-        )
-        if report.demo_ran:
-            print(
-                "[5/6] Run generated demo ... OK "
-                f"(command={' '.join(report.demo_command)})"
-            )
-            if report.last_cycle is not None:
-                action_id = str(report.last_cycle.get("decision_action", ""))
-                planned_operation = str(report.last_cycle.get("planned_operation", ""))
-                executed_operation = str(report.last_cycle.get("execution_operation", ""))
-                print(f"domain_action_id={action_id}")
-                print(f"planned_execution_operation={planned_operation}")
-                print(f"executed_operation={executed_operation}")
-        else:
-            print("[5/6] Run generated demo ... SKIPPED (--no-run)")
-        print(
-            "[6/6] Write artifacts ... OK "
-            f"({report.stdout_log_path.parent / 'quickstart_summary.json'})"
-        )
-        print()
-        print("Quickstart complete.")
-        print(f"Inspect generated scaffold: {report.output_dir}")
-        print(f"Reference DomainSpec: {report.domain_spec_path}")
-        print("Next step: spice init domain <name>")
+        _print_integrated_quickstart_report(report)
         return 0
     except Exception as exc:
         print(f"quickstart failed: {exc}", file=sys.stderr)
         return 1
+
+
+def _print_core_quickstart_report(report: QuickstartReport) -> None:
+    print("[1/6] Load built-in DomainSpec ... OK")
+    print("[2/6] Validate DomainSpec ... OK (schema_version=spice.domain_spec.v1)")
+    print("[3/6] Render deterministic scaffold ... OK")
+    print(
+        "[4/6] Write scaffold ... OK "
+        f"({len(report.scaffold_files)} files -> {report.output_dir})"
+    )
+    if report.demo_ran:
+        print(
+            "[5/6] Run generated demo ... OK "
+            f"(command={' '.join(report.demo_command)})"
+        )
+        _print_last_cycle(report.last_cycle)
+    else:
+        print("[5/6] Run generated demo ... SKIPPED (--no-run)")
+    print(
+        "[6/6] Write artifacts ... OK "
+        f"({report.stdout_log_path.parent / 'quickstart_summary.json'})"
+    )
+    print()
+    print("Core quickstart complete.")
+    print(f"Inspect generated scaffold: {report.output_dir}")
+    print(f"Reference DomainSpec: {report.domain_spec_path}")
+    print("Next step: run `spice quickstart` for decision.md + model wiring.")
+
+
+def _print_integrated_quickstart_report(report: IntegratedQuickstartReport) -> None:
+    core = report.core_report
+    profile = report.decision_profile_report
+    llm = report.llm_report
+    explain = report.decision_explain_report
+    validation = explain.get("validation", {})
+    validation_status = str(validation.get("status", "unknown"))
+
+    print("[1/10] Load built-in example DomainSpec ... OK")
+    print("[2/10] Generate core example scaffold ... OK " f"({core.output_dir})")
+    if core.demo_ran:
+        print("[3/10] Run core example demo ... OK")
+        _print_last_cycle(core.last_cycle)
+    else:
+        print("[3/10] Run core example demo ... SKIPPED (--no-run)")
+    print("[4/10] Initialize decision.md ... OK " f"({profile.profile_path})")
+    if profile.support_path is not None:
+        print(
+            "[5/10] Copy support reference ... OK "
+            f"({profile.support_path}; explain/debug only)"
+        )
+    else:
+        print("[5/10] Copy support reference ... SKIPPED")
+    print("[6/10] Validate decision.md ... OK " f"(status={validation_status})")
+    print("[7/10] Generate LLM-ready example runtime ... OK " f"({llm.output_dir})")
+    if llm.demo_ran:
+        print("[8/10] Run LLM-ready example demo ... OK")
+        _print_last_cycle(llm.last_cycle)
+    else:
+        print("[8/10] Run LLM-ready example demo ... SKIPPED (--no-run)")
+    print(
+        "[9/10] Write artifacts ... OK "
+        f"({core.stdout_log_path.parent / 'integrated_quickstart_summary.json'})"
+    )
+    print("[10/10] Print next commands ... OK")
+    print()
+    print("Quickstart complete.")
+    print("Generated example domain runtime:")
+    print(f"  core_example={core.output_dir}")
+    print(f"  llm_ready_example={llm.output_dir}")
+    print(f"  decision_profile={profile.profile_path}")
+    if profile.support_path is not None:
+        print(f"  support_reference={profile.support_path}")
+    print()
+    print("Use OpenRouter with the example runtime:")
+    print('  export OPENROUTER_API_KEY="your-openrouter-api-key"')
+    print('  export SPICE_DOMAIN_MODEL="openrouter:anthropic/claude-3.5-sonnet"')
+    print(f"  python {llm.output_dir / 'run_demo.py'}")
+    print()
+    print("Use a local/custom subprocess model:")
+    print(f'  SPICE_DOMAIN_MODEL="ollama run qwen2.5" python {llm.output_dir / "run_demo.py"}')
+    print()
+    print("Validate and explain decision.md:")
+    if profile.support_path is not None:
+        print(
+            f"  spice decision explain {profile.profile_path} "
+            f"--support-json {profile.support_path}"
+        )
+    else:
+        print(f"  spice decision explain {profile.profile_path}")
+    print()
+    print("Real projects define their own DomainSpec/domain adapter.")
+    print("This quickstart uses the bundled example domain to show the full Spice boundary.")
+
+
+def _print_last_cycle(last_cycle: dict[str, object] | None) -> None:
+    if last_cycle is None:
+        return
+    action_id = str(last_cycle.get("decision_action", ""))
+    planned_operation = str(last_cycle.get("planned_operation", ""))
+    executed_operation = str(last_cycle.get("execution_operation", ""))
+    print(f"domain_action_id={action_id}")
+    print(f"planned_execution_operation={planned_operation}")
+    print(f"executed_operation={executed_operation}")
 
 
 def _handle_decision_explain(args: argparse.Namespace) -> int:
