@@ -192,7 +192,7 @@ This example stops at decision + next step.
 ---
 
 
-## 🌍 Beyond Personal
+## 🌍 Domain-agnostic Runtime
 
 Spice Personal is just one reference.
 
@@ -207,7 +207,7 @@ Spice is a **general decision runtime** that can be applied to any domain where:
 
 This includes:
 
-- personal decision making  
+- individual decision making 
 - product and business strategy  
 - software development workflows  
 - operations and automation systems  
@@ -225,6 +225,40 @@ It is a **foundation for building decision systems.**
 <p align="center">
   <img src="spice_structure.png" alt="spice structure" width="800">
 </p>
+
+
+---
+
+## 🧭 User Interface: decision.md
+
+The main user-facing interface in Spice is `decision.md`.
+
+Users configure how Spice should compare candidate decisions by editing:
+
+```text
+.spice/decision/decision.md
+```
+
+This file is decision guidance. It is not memory, not a prompt dump, not an execution runbook, and not an agent workflow.
+
+Runtime-active in v1:
+
+- **Primary Objective** — the dominant optimization direction
+- **Preferences / Weights** — score dimensions used during candidate comparison
+- **Hard Constraints** — veto boundaries, when supported by the active policy/domain adapter
+- **Trade-off Rules** — a constrained executable subset for resolving conflicts
+
+Runtime-inactive in v1:
+
+- **Decision Principles**
+- **Evaluation Criteria**
+- **Reflection Guidance**
+
+The bundled default profile is a starter template. Users should edit their local `decision.md`; they should not edit support JSON as normal configuration.
+
+Runtime support comes from the active policy or domain adapter. The copied support JSON is only for explain/demo/debug flows.
+
+See `docs/decision.md` and `docs/decision_quickstart.md` for the support contract and quickstart.
 
 
 ---
@@ -267,84 +301,90 @@ spice-runtime --version
 
 ## 🚀 Quick Start
 
-Spice is a decision-layer runtime.
+Spice starts with an explicit local decision profile.
 
-The easiest way to try Spice is through the reference application: **Spice Personal**.
-
-
-### 1. Initialize your workspace
+### 1. Initialize a decision profile
 
 ```bash
-spice-personal init
+python -m spice.entry decision init
 ```
 
-This creates a local workspace at:
-> .spice/personal/
-and generates a default configuration file.
+This creates:
 
+```text
+.spice/decision/decision.md
+.spice/decision/support/default_support.json
+```
 
+The `decision.md` file is the user-editable profile. The support JSON is a reference for explain/demo/debug flows.
 
+### 2. Edit decision.md
 
-### 2. Ask your first question
+Open:
+
+```text
+.spice/decision/decision.md
+```
+
+The safest first customization is the scoring weights:
+
+```md
+Preferences:
+- outcome_value: 0.40
+- risk_reduction: 0.25
+- reversibility: 0.20
+- confidence_alignment: 0.15
+```
+
+For example, to prefer safer and more reversible decisions:
+
+```md
+Preferences:
+- outcome_value: 0.25
+- risk_reduction: 0.35
+- reversibility: 0.25
+- confidence_alignment: 0.15
+```
+
+### 3. Validate and explain
 
 ```bash
-spice-personal ask "What should I do next?"
-```
-Since no model is configured yet, Spice will guide you with a structured Decision Card:
-
-<p align="center"> <img src="quickstart_image.png" alt="Quickstart onboarding" width="700"> </p>
-
-This helps you understand the next step instead of failing silently.
-
-
-
-
-### 3. Connect a model
-Edit the generated config file:
-> .spice/personal/personal.config.json
-
-Configure your model provider (e.g. OpenRouter) and set your API key:
-
-```bash
-export OPENROUTER_API_KEY=...
+python -m spice.entry decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
 ```
 
+Use `--json` for structured output.
 
-### 4. Run your intent
-```bash
-spice-personal ask "your intent"
+The explanation shows:
+
+- loaded artifact id/version
+- validation status
+- runtime-active and runtime-inactive sections
+- supported and unsupported score dimensions
+- supported and unsupported hard constraints
+- supported and unsupported trade-off rules
+
+### 4. Attach explicitly in runtime code
+
+Spice does not auto-load hidden project state in v1. Attach a profile explicitly:
+
+```python
+from spice.decision import guided_policy_from_profile
+
+policy = guided_policy_from_profile(
+    base_policy,
+    ".spice/decision/decision.md",
+)
 ```
-Now Spice will produce a real decision, not just a setup guide.
 
-### 5. (Optional) Interactive mode
-```bash
-spice-personal session
-```
+The active policy/domain adapter remains the source of runtime capability.
 
-### 6. (Optional) Connect external agents
+### 5. Connect execution only when needed
 
-Spice can delegate actions to external agents (e.g. Claude Code, Codex).
+Spice decides what should be done. External agents execute when you choose to connect them.
 
-This enables:
+Decision → Execution → Outcome → Reflection
 
-- gathering real-world evidence
-- executing tasks based on decisions
-- closing the loop from decision → action
-
-  
-To enable this, configure your agent in:
-> .spice/personal/personal.config.json
-
-
-This is where Spice moves beyond reasoning — into action.
-
-Now Spice can:
-
-- search for relevant information
-
-- call external tools(Currently supports wrappers for CodeX and ClaudeCode.)
-
-- and make decisions grounded in real-world signals
+Execution is optional and pluggable. It is not the core user configuration surface.
 
 
 
