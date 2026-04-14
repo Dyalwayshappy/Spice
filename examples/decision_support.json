@@ -1,0 +1,19 @@
+{
+  "score_dimensions": [
+    "flight_readiness",
+    "pr_risk_reduction",
+    "reversibility",
+    "time_efficiency",
+    "communication_clarity",
+    "implementation_confidence"
+  ],
+  "constraint_ids": [
+    "no_action_that_endangers_departure",
+    "no_rushed_high_risk_code_change",
+    "no_silent_blocker_ignore",
+    "no_irreversible_merge_under_uncertainty"
+  ],
+  "tradeoff_rule_ids": [
+    "delegate_blocking_pr_under_time_pressure"
+  ]
+}
