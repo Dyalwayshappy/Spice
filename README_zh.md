@@ -283,7 +283,7 @@ pip install spice-runtime
 
 ```bash
 pip install -U spice-runtime
-spice-runtime --version
+spice --help
 ```
 
 
