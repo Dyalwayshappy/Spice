@@ -525,69 +525,184 @@ It enables a new way to think, decide, and act:
 
 ## 🔗 SDEP (Spice Decision Execution Protocol)
 
-SDEP is the protocol defined by Spice for connecting the **decision layer** with external execution agents.
+SDEP is a protocol-layer specification for connecting a decision system with external execution agents.
 
-Spice decides *what should be done*.  
+It defines a **standardized boundary** between:
 
-SDEP handles *how that decision is executed and how results flow back*.
+- **Decision (what to do)**
+
+- **Execution (how it is done)**
 
 ---
 
-### 1. Why SDEP
+### 1. Positioning
 
-Most AI systems tightly couple reasoning and execution.
+Modern agent systems often follow patterns like ReAct or reinforcement learning loops, where:
+
+reasoning and acting are interleaved inside a single loop
+
+execution is implicit, embedded in the agent runtime
+
+SDEP takes a different approach:
+
+It externalizes the “Act” step into a first-class protocol boundary
+
+| Layer                    | Role                                   |
+|--------------------------|----------------------------------------|
+| Methodology (ReAct, RL)  | how agents think & learn               |
+| Protocol (SDEP)          | how decisions cross into execution     |
+| Execution                | how actions are actually performed     |
+
+---
+
+### 2. Why SDEP Exists
+
+In most systems today:
+
+- decision logic is tightly coupled to specific tools
+  
+- execution is not standardized
+  
+- results lack the determinism and transparency required for production-grade reliability
 
 SDEP introduces a clean separation:
 
-- **Decision layer (Spice)** → determines intent and direction
-   
-- **Execution layer (agents/tools)** → performs real-world actions
+- **Decision layer (Spice)** → produces structured intent
+- **Execution layer (agents/tools)** → performs actions
 
+This enables:
 
-This allows Spice to act as a **brain above agents**, instead of being tied to any single tool.
+- interchangeable execution backends
+- explicit decision → action mapping
+- full traceability of “why this action happened”
 
----
+> SDEP is not a reasoning framework.
 
-### 2. What SDEP does
-
-SDEP is responsible for:
-
-- **Encoding execution intent**  
-  Turning decisions into structured, executable requests  
-
-- **Dispatching to external agents**  
-  (CLI tools, subprocesses, remote services, etc.)
-
-- **Receiving structured results**  
-  Capturing outputs, status, and signals from execution  
-
-- **Feeding outcomes back into the system**  
-  Enabling state updates, reflection, and next decisions  
+> It is the interface contract between thinking and doing.
 
 ---
 
-### 3. Execution Flow
+### 3. Core Abstractions
 
-Decision → ExecutionIntent → Agent → Result → Outcome → Reflection
+SDEP defines a minimal set of protocol primitives:
 
-- Spice produces a decision  
-- SDEP encodes it as an execution intent  
-- External agents execute the task  
-- Results are returned and structured  
-- Spice updates state and continues reasoning  
+#### 3.1 ExecutionIntent
+
+A structured representation of *what should be executed*.
+
+Includes:
+
+- intent type
+- target (tool / agent / environment)
+- input payload
+- optional constraints / metadata
 
 ---
 
-### 4. What this enables
+#### 3.2 ExecutionResult
 
-- Plug into different execution agents (Claude Code, Codex, etc.)  
-- Keep decision logic independent from execution tools  
-- Build auditable, replayable decision systems  
-- Evolve execution without changing the brain (same brain different agent)
+A normalized representation of *what actually happened*.
 
-> Spice is not an execution agent.  
-> It is the decision layer above agents.
+Includes:
 
+- status (success / failure / partial)
+- outputs (logs, artifacts, messages)
+- signals (e.g. requires_attention, retryable)
+
+---
+
+#### 3.3 Outcome
+
+A domain-aware interpretation of execution results:
+
+- maps raw results → state updates
+- enables reflection and learning
+
+---
+
+### 4. Execution Flow
+
+SDEP formalizes the boundary between decision and execution:
+
+```
+Decision
+↓
+ExecutionIntent
+↓
+[ SDEP Boundary ]
+↓
+External Agent / Tool
+↓
+ExecutionResult
+↓
+Outcome
+↓
+Reflection / State Update
+```
+
+Key idea:
+
+> Everything crossing the boundary is **structured, explicit, and observable**
+
+---
+
+### 5. Execution Flow
+
+#### vs ReAct
+
+- ReAct: reasoning + acting inside one loop
+- SDEP: **extracts “Act” into a protocol**
+
+#### vs Reinforcement Learning
+
+- RL: optimizes behavior via reward signals
+- SDEP: defines **how actions are executed and observed**
+
+#### vs Traditional Tool Calling
+
+Tool calling is usually:
+
+- implicit
+- model-specific
+- hard-coded
+
+SDEP makes it:
+
+- explicit
+- model-agnostic
+- auditable
+- replayable
+
+---
+
+### 6. What This Enables
+
+- **Same Brain, Different Agent**
+  Switch execution backends without changing decision logic
+
+- **Auditable systems**
+  Every action has a traceable intent and result
+
+- **Replay & simulation**
+  Re-run decisions against different execution environments
+
+- **Composable execution layer**
+  CLI, APIs, agents, humans — all become interchangeable executors
+
+
+---
+
+
+### 7. Design Philosophy
+
+> Execution will become cheap and abundant.
+> Decision will become the bottleneck.
+
+SDEP exists to ensure:
+
+- decision systems are not locked into execution tools
+- execution remains replaceable infrastructure
+- the boundary between thinking and acting is **explicit and controllable**
 
 ---
 
