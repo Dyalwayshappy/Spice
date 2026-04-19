@@ -101,35 +101,6 @@ It allows AI systems to:
 ---
 
 
-
-## 🌱 Meet Spice Personal
-
-Spice is a general **decision runtime**. —  
-
-To make this concrete, we built our first reference application:
-
-It is not just a demo.
-
-It is an AI that helps you:
-
-- think through real decisions  (e.g. career, product, strategy) 
-- structure your situation as state  
-- explore possible futures  
-- decide what to do next  
-- and optionally act via external agents  
-
-From:
-
-> question → reasoning → decision → action → outcome
-
-All in one loop.
-
-👉 **[Spice Personal](https://github.com/Dyalwayshappy/spice_personal)** 
-
-
----
-
-
 ## 🧩 Example: from idea → decision → next step 
 
 ### 1. Scenario 
@@ -193,8 +164,6 @@ This example stops at decision + next step.
 
 
 ## 🌍 Domain-agnostic Runtime
-
-Spice Personal is just one reference.
 
 The underlying model is domain-agnostic.
 
@@ -310,7 +279,7 @@ spice quickstart --force
 This starts from the bundled example domain and walks through the full Spice boundary:
 
 ```text
-decision.md -> example domain runtime -> OpenRouter/local LLM -> optional external executor
+decision.md -> example domain runtime -> OpenRouter/local LLM -> optional SDEP execution boundary
 ```
 
 It creates:
@@ -336,9 +305,10 @@ The default quickstart proves that Spice can:
 - validate and explain decision guidance
 - run a domain-specific decision loop
 - attach model advisory through an explicit provider
-- keep execution optional and pluggable
+- keep execution external, pluggable, and auditable through SDEP
 
-The bundled quickstart domain is an example. Real projects define their own `DomainSpec`, domain adapter, supported score dimensions, constraint checks, and executor boundary.
+
+The bundled quickstart domain is an example. Real projects define their own `DomainSpec`, domain adapter, supported score dimensions, constraint checks, and SDEP execution boundary.
 
 ### Core-only Mode
 
@@ -465,13 +435,17 @@ Run the included SDEP execution demo:
 python examples/sdep_agent_demo/run_sdep_adapter_demo.py
 ```
 
-For production integrations, use one of the executor boundaries:
+For production integrations, SDEP is the execution boundary:
 
-- `MockExecutor` for local/demo runs
-- `CLIAdapterExecutor` for command-line tools
-- `SDEPExecutor` for external agent processes that speak the Spice Decision Execution Protocol
+- Spice produces a structured execution intent
+- external agents execute through SDEP
+- execution results return as structured outcomes
+- Spice absorbs decision-relevant outcomes without owning execution internals
 
-Execution is optional and pluggable. It is not mixed into `decision.md`.
+Mock and direct command executors are local test/debug utilities. They are not the recommended public execution path.
+
+Execution is optional and pluggable, but when Spice talks to external agents, SDEP is the canonical boundary. It is not mixed into `decision.md`.
+
 
 ### 7. Latest User Experience Flow
 
@@ -483,7 +457,7 @@ Execution is optional and pluggable. It is not mixed into `decision.md`.
 5. choose OpenRouter, deterministic, or local subprocess model
 6. run the example domain
 7. replace the example domain with your own DomainSpec/domain adapter
-8. optionally connect external executors or SDEP agents
+8. optionally connect external execution agents through SDEP
 ```
 
 
