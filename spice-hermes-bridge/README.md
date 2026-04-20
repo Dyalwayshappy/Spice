@@ -4,6 +4,61 @@ This bridge keeps Spice and Hermes separated.
 
 Hermes receives external signals and coordinates execution. The bridge converts external signals and execution outcomes into structured Spice observations. Spice decides which observations matter, updates decision state, recommends actions, and absorbs decision-relevant execution outcomes.
 
+## Quick Start: Run Spice + Hermes Locally
+
+Use this path when you want to try the working WhatsApp -> Spice -> SDEP -> Hermes loop.
+
+Prerequisites:
+
+- Hermes is installed and configured.
+- Hermes WhatsApp gateway is paired.
+- OpenRouter or another Hermes model provider is configured.
+- `ngrok` is installed if you want a public webhook URL.
+
+Terminal 1: start Hermes WhatsApp gateway:
+
+```bash
+hermes gateway run
+```
+
+Terminal 2: start the Spice bridge from the repo root:
+
+```bash
+scripts/start_all.sh
+```
+
+This starts:
+
+- the Spice WhatsApp webhook server
+- an ngrok tunnel to the local webhook
+- the Hermes inbound relay
+- the default SDEP-backed Spice demo execution path
+
+Then send a WhatsApp message to yourself:
+
+```text
+明天下午3点有个开源计划推进会议，持续1小时
+```
+
+Expected response when no work item is open:
+
+```text
+已记录到 Spice state。当前没有打开的 work item，因此没有触发执行建议。
+```
+
+When a work item conflict exists, Spice may return:
+
+```text
+1 同意执行
+2 拒绝
+3 查看详情
+```
+
+Reply `1` to confirm SDEP-backed Hermes/Codex execution. Reply `2` to reject.
+Reply `3` to inspect the decision explanation.
+
+This is a local reference integration, not a production messaging system.
+
 ## Architecture Boundary
 
 Hermes handles ingress and execution.
