@@ -78,6 +78,13 @@ examples/sdep_payloads/v0.1/
 They include execute request, execute success, task failure, protocol error, and
 agent describe examples.
 
+Machine-readable JSON Schema artifacts live under:
+schemas/sdep/v0.1/
+
+Example payloads live under:
+examples/sdep_payloads/v0.1/
+
+
 ### 3.0 Canonical Envelope (Required)
 Every SDEP message uses this top-level protocol envelope:
 
