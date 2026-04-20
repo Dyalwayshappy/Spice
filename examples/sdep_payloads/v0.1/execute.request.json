@@ -1,0 +1,69 @@
+{
+  "protocol": "sdep",
+  "sdep_version": "0.1",
+  "message_type": "execute.request",
+  "message_id": "sdep-msg-example-execute-request",
+  "request_id": "sdep-req-example-001",
+  "timestamp": "2026-04-20T12:00:00+00:00",
+  "sender": {
+    "id": "spice.runtime",
+    "name": "Spice Runtime",
+    "version": "0.1.0",
+    "vendor": "Spice",
+    "implementation": "spice-runtime",
+    "role": "brain"
+  },
+  "idempotency_key": "exec.decision_20260420_workitem_123",
+  "execution": {
+    "action_type": "decision_hub.delegate_to_executor",
+    "target": {
+      "kind": "work_item",
+      "id": "workitem.github_pr.123",
+      "title": "Fix decision guidance validation",
+      "url": "https://github.com/Dyalwayshappy/Spice/pull/123"
+    },
+    "parameters": {
+      "scope": "triage",
+      "time_budget_minutes": 10,
+      "success_criteria": "Return status, blocker, risk_change, followup_needed, and a concise summary."
+    },
+    "input": {
+      "decision_id": "decision.2026-04-20T12:00:00Z.workitem.github_pr_123.ab12",
+      "trace_ref": "trace.2026-04-20T12:00:00Z.ab12",
+      "acted_on": "workitem.github_pr.123",
+      "selected_action": "decision_hub.delegate_to_executor"
+    },
+    "constraints": [
+      {
+        "id": "time_budget",
+        "description": "Do not exceed the requested time budget."
+      }
+    ],
+    "success_criteria": [
+      {
+        "id": "decision_hub.execution_success",
+        "description": "Return status, blocker, risk_change, followup_needed, and a concise summary."
+      }
+    ],
+    "failure_policy": {
+      "strategy": "fail_fast",
+      "max_retries": 0
+    },
+    "mode": "sync",
+    "dry_run": false,
+    "metadata": {
+      "adapter": "decision_hub_demo.sdep_executor",
+      "demo_action_type": "delegate_to_executor"
+    }
+  },
+  "traceability": {
+    "spice_decision_id": "decision.2026-04-20T12:00:00Z.workitem.github_pr_123.ab12",
+    "trace_ref": "trace.2026-04-20T12:00:00Z.ab12",
+    "acted_on": "workitem.github_pr.123"
+  },
+  "metadata": {
+    "runtime": "spice",
+    "adapter": "decision_hub_demo.sdep_executor",
+    "demo_domain": "decision_hub_demo"
+  }
+}

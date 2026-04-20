@@ -1,0 +1,65 @@
+{
+  "protocol": "sdep",
+  "sdep_version": "0.1",
+  "message_type": "agent.describe.response",
+  "message_id": "sdep-msg-example-describe-response",
+  "request_id": "sdep-req-example-describe-001",
+  "timestamp": "2026-04-20T12:00:01+00:00",
+  "responder": {
+    "id": "agent.hermes_codex",
+    "name": "Hermes Codex SDEP Executor",
+    "version": "0.1.0",
+    "vendor": "Spice Hermes Bridge",
+    "implementation": "hermes-sdep-wrapper",
+    "role": "executor"
+  },
+  "status": "success",
+  "description": {
+    "protocol_support": {
+      "protocol": "sdep",
+      "versions": [
+        "0.1"
+      ],
+      "metadata": {
+        "canonical_boundary": "execution"
+      }
+    },
+    "capabilities": [
+      {
+        "action_type": "decision_hub.delegate_to_executor",
+        "target_kinds": [
+          "work_item"
+        ],
+        "mode_support": [
+          "sync"
+        ],
+        "dry_run_supported": false,
+        "side_effect_class": "external_effect",
+        "outcome_type": "observation",
+        "semantic_inputs": [
+          "decision_id",
+          "selected_action",
+          "acted_on",
+          "target_url",
+          "success_criteria"
+        ],
+        "input_expectation": "object payload with decision traceability and selected action fields",
+        "parameter_expectation": "object payload with scope, time_budget_minutes, target_title, target_url, and success_criteria",
+        "metadata": {
+          "executor": "codex",
+          "native_invocation": "hermes chat -q",
+          "requires_confirmation": true
+        }
+      }
+    ],
+    "capability_version": "0.1.0",
+    "summary": "SDEP wrapper around Hermes/Codex for delegated execution.",
+    "metadata": {
+      "native_invocation": "hermes chat -q",
+      "native_invocation_exposed": false
+    }
+  },
+  "metadata": {
+    "boundary": "spice-hermes-sdep"
+  }
+}

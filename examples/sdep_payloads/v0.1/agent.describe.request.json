@@ -1,0 +1,27 @@
+{
+  "protocol": "sdep",
+  "sdep_version": "0.1",
+  "message_type": "agent.describe.request",
+  "message_id": "sdep-msg-example-describe-request",
+  "request_id": "sdep-req-example-describe-001",
+  "timestamp": "2026-04-20T12:00:00+00:00",
+  "sender": {
+    "id": "spice.runtime",
+    "name": "Spice Runtime",
+    "version": "0.1.0",
+    "vendor": "Spice",
+    "implementation": "spice-runtime",
+    "role": "brain"
+  },
+  "query": {
+    "include_capabilities": true,
+    "action_types": [
+      "decision_hub.delegate_to_executor"
+    ],
+    "metadata": {}
+  },
+  "metadata": {
+    "runtime": "spice",
+    "purpose": "capability_discovery"
+  }
+}

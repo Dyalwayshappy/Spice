@@ -1,0 +1,53 @@
+{
+  "protocol": "sdep",
+  "sdep_version": "0.1",
+  "message_type": "execute.response",
+  "message_id": "sdep-msg-example-execute-response-success",
+  "request_id": "sdep-req-example-001",
+  "timestamp": "2026-04-20T12:03:00+00:00",
+  "responder": {
+    "id": "agent.hermes_codex",
+    "name": "Hermes Codex SDEP Executor",
+    "version": "0.1.0",
+    "vendor": "Spice Hermes Bridge",
+    "implementation": "hermes-sdep-wrapper",
+    "role": "executor"
+  },
+  "status": "success",
+  "outcome": {
+    "execution_id": "hermes.exec.20260420.001",
+    "status": "success",
+    "outcome_type": "observation",
+    "output": {
+      "decision_id": "decision.2026-04-20T12:00:00Z.workitem.github_pr_123.ab12",
+      "selected_action": "decision_hub.delegate_to_executor",
+      "acted_on": "workitem.github_pr.123",
+      "status": "success",
+      "elapsed_minutes": 6,
+      "risk_change": "reduced",
+      "followup_needed": true,
+      "summary": "PR triaged. No blocking issue found; full review can happen after the meeting.",
+      "blocking_issue": null,
+      "execution_ref": "hermes.exec.20260420.001"
+    },
+    "artifacts": [],
+    "metrics": {
+      "elapsed_minutes": 6
+    },
+    "metadata": {
+      "executor": "hermes_codex",
+      "native_runner": "hermes.chat",
+      "sdep_wrapper": "hermes_sdep_agent"
+    }
+  },
+  "traceability": {
+    "spice_decision_id": "decision.2026-04-20T12:00:00Z.workitem.github_pr_123.ab12",
+    "trace_ref": "trace.2026-04-20T12:00:00Z.ab12",
+    "acted_on": "workitem.github_pr.123"
+  },
+  "metadata": {
+    "boundary": "spice-hermes-sdep",
+    "native_call_hidden": true,
+    "action_type": "decision_hub.delegate_to_executor"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "protocol": "sdep",
+  "sdep_version": "0.1",
+  "message_type": "execute.response",
+  "message_id": "sdep-msg-example-execute-response-protocol-error",
+  "request_id": "sdep-req-example-001",
+  "timestamp": "2026-04-20T12:01:00+00:00",
+  "responder": {
+    "id": "agent.hermes_codex",
+    "name": "Hermes Codex SDEP Executor",
+    "version": "0.1.0",
+    "vendor": "Spice Hermes Bridge",
+    "implementation": "hermes-sdep-wrapper",
+    "role": "executor"
+  },
+  "status": "error",
+  "outcome": {
+    "execution_id": "",
+    "status": "failed",
+    "outcome_type": "error",
+    "output": {},
+    "artifacts": [],
+    "metrics": {},
+    "metadata": {
+      "executor": "hermes_codex"
+    }
+  },
+  "error": {
+    "code": "hermes.timeout",
+    "message": "Hermes timed out after 120 seconds.",
+    "retryable": true,
+    "details": {
+      "timeout_seconds": 120
+    }
+  },
+  "traceability": {
+    "spice_decision_id": "decision.2026-04-20T12:00:00Z.workitem.github_pr_123.ab12",
+    "trace_ref": "trace.2026-04-20T12:00:00Z.ab12",
+    "acted_on": "workitem.github_pr.123"
+  },
+  "metadata": {
+    "boundary": "spice-hermes-sdep",
+    "native_call_hidden": true,
+    "action_type": "decision_hub.delegate_to_executor"
+  }
+}
