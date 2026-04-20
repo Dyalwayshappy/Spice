@@ -561,6 +561,29 @@ SDEP 是一项协议层规范，旨在连接 **决策系统（Decision System）
 
 ---
 
+### 从这里开始
+
+如果你想理解或实现 SDEP，可以从以下内容开始：
+
+- **协议规范**：`docs/sdep_v0_1.md`
+- **JSON Schemas**：`schemas/sdep/v0.1/`
+- **示例 payloads**：`examples/sdep_payloads/v0.1/`
+- **Executor quickstart**：`examples/sdep_quickstart/`
+- **Wrapper template**：`examples/sdep_wrapper_template/`
+
+SDEP v0.1 定义了：
+
+- `execute.request`
+- `execute.response`
+- `agent.describe.request`
+- `agent.describe.response`
+
+这些 schemas 用于校验公开的 wire contract。  
+领域相关的 payload，例如 `execution.parameters`、`execution.input`、`metadata` 和 `traceability`，仍然保留为可扩展对象。
+
+
+---
+
 ### 1. 定位
 
 现代智能体（Agent）系统通常遵循 ReAct 或强化学习（RL）循环模式：
@@ -806,8 +829,15 @@ spice/
 │   ├── entry/                 #    核心 CLI/tooling (快速开始/初始化领域)
 │   └── adapters/              #    外部系统适配器
 ├── tests/                     # ✅ 核心测试套件
-├── docs/                      # 📚 架构 + 协议文档 (包括 SDEP)
-├── examples/                  # 🧪 运行环境和 SDEP 示例
+├── docs/                      # 📚 架构与协议文档（包括 SDEP）
+├── schemas/                   # 📐 可机器读取的 SDEP JSON Schemas
+├── examples/                  # 🧪 Runtime、决策与 SDEP 示例
+│   ├── decision_hub_demo/     #    基于 simulation 的决策 demo domain
+│   ├── sdep_agent_demo/       #    最小 SDEP executor demo
+│   ├── sdep_quickstart/       #    面向 executor 作者的 SDEP quickstart
+│   ├── sdep_payloads/         #    SDEP request / response 示例 payloads
+│   └── sdep_wrapper_template/ #    用于封装非 SDEP agents 的 wrapper 模板
+├── spice-hermes-bridge/       # 🌉 参考桥接：WhatsApp / GitHub -> Spice -> SDEP -> Hermes
 ├── pyproject.toml             # 📦 spice-runtime 包元数据
 ├── README.md                  # 📝 核心项目概览
 ├── LICENSE                    # ⚖️ MIT
