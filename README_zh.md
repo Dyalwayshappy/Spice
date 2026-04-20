@@ -475,6 +475,45 @@ python examples/sdep_agent_demo/run_sdep_adapter_demo.py
 ```
 
 
+---
+
+## 🔁 Spice + Hermes 参考集成
+
+Spice 已经包含一个可运行的 Hermes 参考集成，用于展示完整的“决策 → 执行 → 结果回流”闭环。
+
+```text
+WhatsApp / GitHub signal
+-> Spice-Hermes Bridge
+-> Spice decision_hub_demo
+-> WorldState / ActiveDecisionContext
+-> structured simulation
+-> decision.md guided selection
+-> SDEP execute.request
+-> Hermes/Codex execution
+-> SDEP execute.response
+-> execution_result_observed
+-> Spice state update
+```
+
+这个集成展示了我们希望保持的系统分离：
+
+- **Spice** 负责状态建模、模拟、决策选择和决策演化
+- **Hermes** 负责消息入口和执行
+- **SDEP** 是决策与执行之间的协议边界
+- **Bridge** 将外部信号和执行结果转换为结构化的 Spice observations
+
+这是一个参考集成，不是 Spice core。
+
+从这里开始：
+
+- `spice-hermes-bridge/README.md` — 运行本地 WhatsApp + Hermes + Spice 闭环
+- `examples/decision_hub_demo/` — 基于 simulation 的决策 demo domain
+- `examples/sdep_quickstart/` — 构建一个 SDEP executor
+- `schemas/sdep/v0.1/` — SDEP JSON Schemas
+- `examples/sdep_payloads/v0.1/` — SDEP 示例 payloads
+
+这一节用于说明：Spice 如何位于执行型 Agent 之上，同时又不变成一个执行框架。
+
 
 ---
 
