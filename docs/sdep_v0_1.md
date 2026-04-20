@@ -52,6 +52,32 @@ Out of scope for v0.1:
 
 ## 3. Message Contract
 
+Machine-readable JSON Schema artifacts live under:
+
+```text
+schemas/sdep/v0.1/
+```
+
+These schemas define the public wire shape for:
+
+- `execute.request`
+- `execute.response`
+- `agent.describe.request`
+- `agent.describe.response`
+
+They validate the protocol envelope, identity, execution handoff, outcome, error,
+and capability declaration shape. Domain payloads such as `execution.parameters`,
+`execution.input`, `metadata`, and `traceability` remain open extension objects.
+
+Example payloads live under:
+
+```text
+examples/sdep_payloads/v0.1/
+```
+
+They include execute request, execute success, task failure, protocol error, and
+agent describe examples.
+
 ### 3.0 Canonical Envelope (Required)
 Every SDEP message uses this top-level protocol envelope:
 
