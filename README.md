@@ -464,6 +464,46 @@ Execution is optional and pluggable, but when Spice talks to external agents, SD
 
 ---
 
+## 🔁 Spice + Hermes Reference Integration
+
+Spice includes a working reference integration with Hermes to demonstrate the full decision-to-execution loop.
+
+```text
+WhatsApp / GitHub signal
+-> Spice-Hermes Bridge
+-> Spice decision_hub_demo
+-> WorldState / ActiveDecisionContext
+-> structured simulation
+-> decision.md guided selection
+-> SDEP execute.request
+-> Hermes/Codex execution
+-> SDEP execute.response
+-> execution_result_observed
+-> Spice state update
+```
+
+This integration demonstrates the intended separation:
+
+- **Spice** handles state, simulation, decision selection, and decision evolution
+- **Hermes** handles messaging ingress and execution
+- **SDEP** is the execution boundary between decision and execution
+- **Bridge** converts external signals and execution outcomes into structured Spice observations
+
+This is a reference integration, not Spice core.
+
+Start here:
+
+- `spice-hermes-bridge/README.md` — run the local WhatsApp + Hermes + Spice loop
+- `examples/decision_hub_demo/` — simulation-driven decision demo domain
+- `examples/sdep_quickstart/` — build an SDEP executor
+- `schemas/sdep/v0.1/` — SDEP JSON Schemas
+- `examples/sdep_payloads/v0.1/` — SDEP example payloads
+
+Use this section to understand how Spice sits above execution agents without becoming an execution framework.
+
+
+---
+
 
 
 ## ✨ Features
@@ -506,6 +546,27 @@ It defines a **standardized boundary** between:
 - **Decision (what to do)**
 
 - **Execution (how it is done)**
+
+---
+
+### Start Here
+
+If you want to understand or implement SDEP, start from:
+
+- **Protocol spec**: `docs/sdep_v0_1.md`
+- **JSON Schemas**: `schemas/sdep/v0.1/`
+- **Example payloads**: `examples/sdep_payloads/v0.1/`
+- **Executor quickstart**: `examples/sdep_quickstart/`
+- **Wrapper template**: `examples/sdep_wrapper_template/`
+
+SDEP v0.1 defines:
+
+- `execute.request`
+- `execute.response`
+- `agent.describe.request`
+- `agent.describe.response`
+
+The schemas validate the public wire contract. Domain-specific payloads such as `execution.parameters`, `execution.input`, `metadata`, and `traceability` remain open extension objects.
 
 ---
 
@@ -620,7 +681,7 @@ Key idea:
 
 ---
 
-### 5. Execution Flow
+### 5. SDEP vs Existing Agent Patterns
 
 #### vs ReAct
 
@@ -744,15 +805,6 @@ enabling a clean, direct connection between decision systems and execution.
 
 
 
-
-
-
-
-
-
-
-
-
 ## 📁 Project Structure
 
 ```
@@ -773,7 +825,14 @@ spice/
 │   └── adapters/              #    External system adapters
 ├── tests/                     # ✅ Core test suite
 ├── docs/                      # 📚 Architecture + protocol docs (incl. SDEP)
-├── examples/                  # 🧪 Runtime and SDEP examples
+├── schemas/                   # 📐 Machine-readable SDEP JSON Schemas
+├── examples/                  # 🧪 Runtime, decision, and SDEP examples
+│   ├── decision_hub_demo/     #    Simulation-driven decision demo domain
+│   ├── sdep_agent_demo/       #    Minimal SDEP executor demo
+│   ├── sdep_quickstart/       #    SDEP quickstart for executor authors
+│   ├── sdep_payloads/         #    Example SDEP request/response payloads
+│   └── sdep_wrapper_template/ #    Template for wrapping non-SDEP agents
+├── spice-hermes-bridge/       # 🌉 Reference bridge: WhatsApp/GitHub -> Spice -> SDEP -> Hermes
 ├── pyproject.toml             # 📦 spice-runtime package metadata
 ├── README.md                  # 📝 Core project overview
 ├── LICENSE                    # ⚖️ MIT
@@ -798,7 +857,7 @@ PRs are welcome — the system is designed to be modular and extensible.
 ### Current
 
 - [x] Decision runtime (perception → state → decision → reflection)  
-- [x] Personal reference app (CLI + onboarding)  
+- [x] [x] Integrated quickstart and domain scaffolding 
 - [x] SDEP (Decision → Execution protocol)  
 - [x] Wrapper ecosystem for external agents  
 - [x] End-to-end loop (decision → execution → outcome)  
@@ -811,7 +870,7 @@ PRs are welcome — the system is designed to be modular and extensible.
   Better simulation, trade-off analysis, and multi-step reasoning  
 
 - [ ] **Stronger memory layer**  
-  Long-term state, context compression, and memory providers  
+  Cleaner WorldState governance, context slicing, and decision-relevant state updates
 
 - [ ] **More execution integrations**  
   Expand agent ecosystem (CLI, APIs, tools, services)  
@@ -865,8 +924,8 @@ A system that:
 Not just a tool.  
 Not just a chatbot.  
 
-But a **personal decision brain**  
-that evolves with you over time.
+But a **decision brain**  
+that evolves with context, outcomes, and goals over time.
 
 We've recently been considering the commercialization path for Spice, and to achieve our vision, we'll be moving towards a **General AI Brain**. We're currently preparing a very compelling demo, so stay tuned!
 
