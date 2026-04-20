@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spice.dev/schemas/sdep/v0.1/common.schema.json",
+  "title": "SDEP v0.1 Common Definitions",
+  "description": "Shared JSON Schema definitions for the Spice Decision Execution Protocol v0.1.",
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "traceability": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "protocol": {
+      "const": "sdep"
+    },
+    "sdep_version": {
+      "const": "0.1"
+    },
+    "message_id": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "request_id": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "brain_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version", "role"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "name": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "implementation": {
+          "type": "string"
+        },
+        "role": {
+          "const": "brain"
+        }
+      }
+    },
+    "executor_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version", "implementation", "role"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "name": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "implementation": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "role": {
+          "const": "executor"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "id": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "outcome_status": {
+      "enum": ["success", "failed", "partial", "abandoned", "unknown"]
+    },
+    "response_status": {
+      "enum": ["success", "error"]
+    },
+    "outcome_type": {
+      "description": "SDEP base outcome type or a namespaced domain-specific outcome type.",
+      "anyOf": [
+        {
+          "enum": [
+            "ack",
+            "state_delta",
+            "artifact_bundle",
+            "observation",
+            "request_state",
+            "approval_state",
+            "error"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_.-]+$"
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "retryable", "details"],
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "message": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "details": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "side_effect_class": {
+      "enum": ["read_only", "state_change", "external_effect"]
+    }
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spice.dev/schemas/sdep/v0.1/agent.describe.response.schema.json",
+  "title": "SDEP v0.1 Agent Describe Response",
+  "description": "SDEP capability declaration response for execution-layer agents.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "sdep_version",
+    "message_type",
+    "message_id",
+    "request_id",
+    "timestamp",
+    "responder",
+    "status",
+    "description",
+    "metadata"
+  ],
+  "properties": {
+    "protocol": {
+      "$ref": "common.schema.json#/$defs/protocol"
+    },
+    "sdep_version": {
+      "$ref": "common.schema.json#/$defs/sdep_version"
+    },
+    "message_type": {
+      "const": "agent.describe.response"
+    },
+    "message_id": {
+      "$ref": "common.schema.json#/$defs/message_id"
+    },
+    "request_id": {
+      "$ref": "common.schema.json#/$defs/request_id"
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "responder": {
+      "$ref": "common.schema.json#/$defs/executor_identity"
+    },
+    "status": {
+      "$ref": "common.schema.json#/$defs/response_status"
+    },
+    "description": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_support", "capabilities", "metadata"],
+      "properties": {
+        "protocol_support": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["protocol", "versions", "metadata"],
+          "properties": {
+            "protocol": {
+              "$ref": "common.schema.json#/$defs/protocol"
+            },
+            "versions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "common.schema.json#/$defs/non_empty_string"
+              }
+            },
+            "metadata": {
+              "$ref": "common.schema.json#/$defs/metadata"
+            }
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "action_type",
+              "target_kinds",
+              "mode_support",
+              "dry_run_supported",
+              "side_effect_class",
+              "outcome_type",
+              "semantic_inputs",
+              "input_expectation",
+              "parameter_expectation",
+              "metadata"
+            ],
+            "properties": {
+              "action_type": {
+                "$ref": "common.schema.json#/$defs/non_empty_string"
+              },
+              "target_kinds": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "common.schema.json#/$defs/non_empty_string"
+                }
+              },
+              "mode_support": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "common.schema.json#/$defs/non_empty_string"
+                }
+              },
+              "dry_run_supported": {
+                "type": "boolean"
+              },
+              "side_effect_class": {
+                "$ref": "common.schema.json#/$defs/side_effect_class"
+              },
+              "outcome_type": {
+                "$ref": "common.schema.json#/$defs/outcome_type"
+              },
+              "semantic_inputs": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/non_empty_string"
+                }
+              },
+              "input_expectation": {
+                "$ref": "common.schema.json#/$defs/non_empty_string"
+              },
+              "parameter_expectation": {
+                "$ref": "common.schema.json#/$defs/non_empty_string"
+              },
+              "metadata": {
+                "$ref": "common.schema.json#/$defs/metadata"
+              }
+            }
+          }
+        },
+        "capability_version": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        }
+      }
+    },
+    "error": {
+      "$ref": "common.schema.json#/$defs/error"
+    },
+    "traceability": {
+      "$ref": "common.schema.json#/$defs/traceability"
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/metadata"
+    }
+  }
+}

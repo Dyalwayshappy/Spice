@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spice.dev/schemas/sdep/v0.1/execute.request.schema.json",
+  "title": "SDEP v0.1 Execute Request",
+  "description": "Canonical SDEP execute.request wire payload. This schema validates the protocol envelope and execution handoff shape, while keeping domain-specific payloads open.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "sdep_version",
+    "message_type",
+    "message_id",
+    "request_id",
+    "timestamp",
+    "sender",
+    "idempotency_key",
+    "execution",
+    "metadata"
+  ],
+  "properties": {
+    "protocol": {
+      "$ref": "common.schema.json#/$defs/protocol"
+    },
+    "sdep_version": {
+      "$ref": "common.schema.json#/$defs/sdep_version"
+    },
+    "message_type": {
+      "const": "execute.request"
+    },
+    "message_id": {
+      "$ref": "common.schema.json#/$defs/message_id"
+    },
+    "request_id": {
+      "$ref": "common.schema.json#/$defs/request_id"
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "sender": {
+      "$ref": "common.schema.json#/$defs/brain_identity"
+    },
+    "idempotency_key": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_type",
+        "target",
+        "parameters",
+        "input",
+        "constraints",
+        "success_criteria",
+        "failure_policy",
+        "mode",
+        "dry_run",
+        "metadata"
+      ],
+      "properties": {
+        "action_type": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "target": {
+          "$ref": "common.schema.json#/$defs/target"
+        },
+        "parameters": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        },
+        "input": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "success_criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "failure_policy": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        },
+        "mode": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        }
+      }
+    },
+    "traceability": {
+      "$ref": "common.schema.json#/$defs/traceability"
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/metadata"
+    }
+  }
+}

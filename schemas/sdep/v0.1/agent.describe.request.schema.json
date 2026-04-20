@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spice.dev/schemas/sdep/v0.1/agent.describe.request.schema.json",
+  "title": "SDEP v0.1 Agent Describe Request",
+  "description": "SDEP capability declaration request. This discovery path is optional and is not required before every execute call.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "sdep_version",
+    "message_type",
+    "message_id",
+    "request_id",
+    "timestamp",
+    "sender",
+    "query",
+    "metadata"
+  ],
+  "properties": {
+    "protocol": {
+      "$ref": "common.schema.json#/$defs/protocol"
+    },
+    "sdep_version": {
+      "$ref": "common.schema.json#/$defs/sdep_version"
+    },
+    "message_type": {
+      "const": "agent.describe.request"
+    },
+    "message_id": {
+      "$ref": "common.schema.json#/$defs/message_id"
+    },
+    "request_id": {
+      "$ref": "common.schema.json#/$defs/request_id"
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "sender": {
+      "$ref": "common.schema.json#/$defs/brain_identity"
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include_capabilities", "action_types", "metadata"],
+      "properties": {
+        "include_capabilities": {
+          "type": "boolean"
+        },
+        "action_types": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/non_empty_string"
+          }
+        },
+        "metadata": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        }
+      }
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/metadata"
+    }
+  }
+}

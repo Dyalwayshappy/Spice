@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spice.dev/schemas/sdep/v0.1/execute.response.schema.json",
+  "title": "SDEP v0.1 Execute Response",
+  "description": "Canonical SDEP execute.response wire payload. response.status describes protocol/wrapper status; outcome.status describes task execution status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "sdep_version",
+    "message_type",
+    "message_id",
+    "request_id",
+    "timestamp",
+    "responder",
+    "status",
+    "outcome",
+    "metadata"
+  ],
+  "properties": {
+    "protocol": {
+      "$ref": "common.schema.json#/$defs/protocol"
+    },
+    "sdep_version": {
+      "$ref": "common.schema.json#/$defs/sdep_version"
+    },
+    "message_type": {
+      "const": "execute.response"
+    },
+    "message_id": {
+      "$ref": "common.schema.json#/$defs/message_id"
+    },
+    "request_id": {
+      "$ref": "common.schema.json#/$defs/request_id"
+    },
+    "timestamp": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "responder": {
+      "$ref": "common.schema.json#/$defs/executor_identity"
+    },
+    "status": {
+      "$ref": "common.schema.json#/$defs/response_status"
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_id",
+        "status",
+        "outcome_type",
+        "output",
+        "artifacts",
+        "metrics",
+        "metadata"
+      ],
+      "properties": {
+        "execution_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "common.schema.json#/$defs/outcome_status"
+        },
+        "outcome_type": {
+          "$ref": "common.schema.json#/$defs/outcome_type"
+        },
+        "output": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/artifact"
+          }
+        },
+        "metrics": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        },
+        "metadata": {
+          "$ref": "common.schema.json#/$defs/metadata"
+        }
+      }
+    },
+    "error": {
+      "$ref": "common.schema.json#/$defs/error"
+    },
+    "traceability": {
+      "$ref": "common.schema.json#/$defs/traceability"
+    },
+    "metadata": {
+      "$ref": "common.schema.json#/$defs/metadata"
+    }
+  },
+  "if": {
+    "properties": {
+      "status": { "const": "error" }
+    },
+    "required": ["status"]
+  },
+  "then": {
+    "required": ["error"],
+    "properties": {
+      "error": { "$ref": "common.schema.json#/$defs/error" }
+    }
+  },
+  "else": {
+    "properties": {
+      "error": false
+    }
+  }
+}
