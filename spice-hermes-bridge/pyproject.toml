@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spice-hermes-bridge"
+version = "0.1.0"
+description = "Thin bridge between Hermes ingress/execution and Spice structured observations."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Spice Contributors" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+spice-hermes = "spice_hermes_bridge.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["spice_hermes_bridge*"]
+

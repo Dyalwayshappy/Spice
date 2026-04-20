@@ -1,0 +1,25 @@
+{
+  "observation_id": "obs_33333333333333333333333333333333",
+  "observation_type": "execution_result_observed",
+  "source": "hermes",
+  "observed_at": "2026-04-16T02:15:00+00:00",
+  "confidence": 1.0,
+  "attributes": {
+    "decision_id": "decision.2026-04-16T10:07:00+08:00.github_pr_123",
+    "execution_ref": "hermes.session.demo.execution.1",
+    "acted_on": "workitem.github_pr.123",
+    "selected_action": "quick_triage_then_defer",
+    "status": "success",
+    "elapsed_minutes": 7,
+    "blocking_issue": null,
+    "risk_change": "reduced",
+    "followup_needed": true,
+    "followup_summary": "Full PR review still needed after meeting.",
+    "summary": "Quick triage completed; PR is not release-blocking."
+  },
+  "provenance": {
+    "platform": "hermes",
+    "executor": "codex",
+    "hermes_session_id": "demo-session"
+  }
+}

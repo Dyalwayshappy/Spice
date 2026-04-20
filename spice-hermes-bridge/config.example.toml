@@ -1,0 +1,12 @@
+[spice]
+decision_profile = ".spice/decision/decision.md"
+domain = "personal_ops_demo"
+
+[github]
+repos = ["Dyalwayshappy/Spice"]
+poll_interval_seconds = 300
+
+[hermes]
+home = "~/.hermes"
+gateway = "whatsapp"
+

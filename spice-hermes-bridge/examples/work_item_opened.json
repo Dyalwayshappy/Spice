@@ -1,0 +1,26 @@
+{
+  "observation_id": "obs_22222222222222222222222222222222",
+  "observation_type": "work_item_opened",
+  "source": "github",
+  "observed_at": "2026-04-16T02:05:00+00:00",
+  "confidence": 1.0,
+  "attributes": {
+    "kind": "pull_request",
+    "repo": "Dyalwayshappy/Spice",
+    "item_id": "123",
+    "title": "Fix decision guidance validation",
+    "url": "https://github.com/Dyalwayshappy/Spice/pull/123",
+    "action": "opened",
+    "urgency_hint": "medium",
+    "estimated_minutes_hint": 30,
+    "requires_attention": true,
+    "event_key": "github:Dyalwayshappy/Spice:pull_request:123:opened"
+  },
+  "provenance": {
+    "adapter": "github_pr.v1",
+    "github_event_id": "pull_request:123:opened",
+    "polled_at": "2026-04-16T02:10:00+00:00",
+    "api_source": "pulls_api",
+    "time_anchor_source": "github_event_time"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "observation_id": "obs_dddddddddddddddddddddddddddddddd",
+  "observation_type": "executor_capability_observed",
+  "source": "hermes",
+  "observed_at": "2026-04-17T00:00:00+00:00",
+  "confidence": 1.0,
+  "attributes": {
+    "capability_id": "cap.external_executor.codex",
+    "action_type": "delegate_to_executor",
+    "executor": "codex",
+    "supported_scopes": ["triage", "review_summary"],
+    "requires_confirmation": true,
+    "reversible": true,
+    "default_time_budget_minutes": 10,
+    "availability": "available"
+  },
+  "provenance": {
+    "adapter": "hermes_capability.v1",
+    "reported_by": "hermes",
+    "notes": "Codex available via Hermes terminal/codex skill."
+  }
+}
