@@ -13,6 +13,8 @@ from spice.decision import (
     format_decision_guidance_explanation,
     init_decision_profile,
 )
+from spice.decision.compare import render_compare_json, render_compare_text
+from spice.decision.compare_payload import load_compare_payload
 from spice.entry.assist import (
     ASSIST_MAX_TRIES_DEFAULT,
     capture_brief,
@@ -149,6 +151,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print structured JSON instead of the concise text report.",
     )
     decision_explain.set_defaults(handler=_handle_decision_explain)
+
+    decision_compare = decision_subparsers.add_parser(
+        "compare",
+        help="Render a human-readable decision comparison artifact.",
+    )
+    decision_compare.add_argument(
+        "--input",
+        type=Path,
+        required=True,
+        help="Path to a decision comparison JSON artifact.",
+    )
+    decision_compare.add_argument(
+        "--json",
+        action="store_true",
+        help="Print normalized JSON instead of text output.",
+    )
+    decision_compare.add_argument(
+        "--no-bars",
+        action="store_true",
+        help="Disable terminal score bars in text output.",
+    )
+    decision_compare.add_argument(
+        "--show-execution",
+        action="store_true",
+        help="Show the downstream execution boundary section in text output.",
+    )
+    decision_compare.set_defaults(handler=_handle_decision_compare)
 
     init_parser = subparsers.add_parser(
         "init",
@@ -401,6 +430,25 @@ def _handle_decision_explain(args: argparse.Namespace) -> int:
         return 0
     except Exception as exc:
         print(f"decision explain failed: {exc}", file=sys.stderr)
+        return 1
+
+
+def _handle_decision_compare(args: argparse.Namespace) -> int:
+    try:
+        payload = load_compare_payload(args.input)
+        if bool(args.json):
+            print(render_compare_json(payload))
+        else:
+            print(
+                render_compare_text(
+                    payload,
+                    show_execution=bool(args.show_execution),
+                    use_bars=not bool(args.no_bars),
+                )
+            )
+        return 0
+    except Exception as exc:
+        print(f"decision compare failed: {exc}", file=sys.stderr)
         return 1
 
 
