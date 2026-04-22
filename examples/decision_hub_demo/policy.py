@@ -19,6 +19,7 @@ from spice.decision.guidance import (
 from spice.protocols.decision import Decision
 from spice.protocols.world_state import WorldState
 
+from spice.decision.compare_payload import build_compare_payload_from_trace
 from examples.decision_hub_demo.candidates import (
     CandidateGenerationReport,
     CandidateRecord,
@@ -232,6 +233,15 @@ class DecisionHubRecommendationRunner:
             tradeoff_rules_applied=decision.attributes.get("applied_tradeoff_rules", []),
             trace=trace,
         )
+        compare_payload = build_compare_payload_from_trace(
+            trace,
+            decision_id=decision_id,
+            trace_ref=trace_ref,
+            recommendation={
+                "human_summary": formatted["human_summary"],
+                "reason_summary": formatted["reason_summary"],
+            },
+        )
         return {
             "decision_id": decision_id,
             "recommendation": formatted["recommendation"],
@@ -253,6 +263,7 @@ class DecisionHubRecommendationRunner:
             "recommendation_source": "GuidedDecisionPolicy",
             "llm_direct_recommendation": False,
             "trace": trace,
+            "compare_payload": compare_payload,
         }
 
 
