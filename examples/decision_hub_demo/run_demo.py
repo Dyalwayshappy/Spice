@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,9 @@ from examples.decision_hub_demo.llm_simulation import build_simulation_runner_fr
 from examples.decision_hub_demo.policy import DecisionHubRecommendationRunner
 from examples.decision_hub_demo.reducer import ingest_observation
 from examples.decision_hub_demo.state import DOMAIN_KEY, new_world_state
+
+DEMO_DIR = Path(__file__).resolve().parent
+DEFAULT_COMPARE_OUTPUT_DIR = DEMO_DIR / "compare_artifacts"
 
 
 def build_demo_state(now: datetime):
@@ -121,6 +125,7 @@ def run_path(choice: str, *, now: datetime) -> dict[str, object]:
         "veto_reasons": result["veto_reasons"],
         "score_breakdown": result["score_breakdown"],
         "trace_ref": result["trace_ref"],
+        "compare_payload": result["compare_payload"],
         "control": control.to_payload(),
         "confirmation_text": confirmation_text,
         "resolution": resolution.to_payload() if resolution else None,
@@ -130,8 +135,47 @@ def run_path(choice: str, *, now: datetime) -> dict[str, object]:
     }
 
 
-def main() -> None:
+def build_compare_artifact(*, now: datetime) -> dict[str, object]:
+    state = build_demo_state(now)
+    result = DecisionHubRecommendationRunner(
+        simulation_runner=build_simulation_runner_from_env()
+    ).recommend(state, {"now": now})
+    return result["compare_payload"]
+
+
+def _write_compare_artifact(output_dir: Path, *, now: datetime) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target = output_dir / "meeting_vs_pr_conflict.json"
+    target.write_text(
+        json.dumps(build_compare_artifact(now=now), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return target
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run decision_hub_demo scenarios.")
+    parser.add_argument(
+        "--write-compare-artifact",
+        action="store_true",
+        help="Write a compare artifact generated from the demo decision path.",
+    )
+    parser.add_argument(
+        "--compare-output-dir",
+        type=Path,
+        default=DEFAULT_COMPARE_OUTPUT_DIR,
+        help="Directory for generated compare artifacts (default: examples/decision_hub_demo/compare_artifacts).",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = _build_parser().parse_args(argv)
     now = datetime.now(timezone.utc).replace(microsecond=0)
+    if bool(args.write_compare_artifact):
+        artifact_path = _write_compare_artifact(args.compare_output_dir, now=now)
+        print(f"compare_artifact={artifact_path}")
+        return
 
     print(
         json.dumps(
