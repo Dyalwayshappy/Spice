@@ -131,3 +131,37 @@ confirmations produce SDEP `execute.request` messages, Hermes/Codex execution
 stays behind the SDEP wrapper, and outcomes return as `execution_result_observed`.
 Mock or direct Hermes executors are explicit test/debug overrides, not the
 public default.
+
+## Decision comparison artifact
+
+The demo can export a stable compare artifact from the real decision path:
+
+```sh
+python examples/decision_hub_demo/run_demo.py --write-compare-artifact
+```
+
+This writes:
+
+```text
+examples/decision_hub_demo/compare_artifacts/meeting_vs_pr_conflict.json
+```
+
+The artifact is not a raw trace dump. It is a decision comparison object built
+from the demo trace and shaped for human-readable inspection.
+
+Inspect it with:
+
+```sh
+python -m spice.entry decision compare \
+  --input examples/decision_hub_demo/compare_artifacts/meeting_vs_pr_conflict.json
+```
+
+To include the downstream execution section:
+
+```sh
+python -m spice.entry decision compare \
+  --input examples/decision_hub_demo/compare_artifacts/meeting_vs_pr_conflict.json \
+  --show-execution
+```
+
+Use `--json` to inspect the normalized comparison payload directly.
