@@ -30,7 +30,7 @@ def format_recommendation(
 
 def _human_summary(selected_action: str, target: str) -> str:
     if selected_action == "delegate_to_executor":
-        return f"Delegate {target} to the available executor and review the outcome afterward."
+        return f"Delegate {target} and review the outcome afterward."
     if selected_action == "quick_triage_then_defer":
         return f"Spend a short triage window on {target}, then defer full handling."
     if selected_action == "handle_now":
