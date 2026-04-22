@@ -1,0 +1,662 @@
+{
+  "candidate_decisions": [
+    {
+      "action": "handle_now",
+      "candidate_id": "cand.handle_now",
+      "disabled_reason": "",
+      "enabled_reason": "baseline candidate for time-sensitive work-item decisions",
+      "expected_effect": {
+        "attention_cost": "high",
+        "commitment_risk": "high",
+        "expected_time_cost_minutes": 30.0,
+        "followup_needed": false,
+        "followup_summary": "Immediate handling may close or materially advance the work item.",
+        "reversibility": "medium",
+        "work_item_risk_change": "reduced"
+      },
+      "intent": "Spend the current time window on the work item immediately.",
+      "is_selected": false,
+      "key_constraints": [
+        "do not select a candidate expected to create high risk to a fixed commitment"
+      ],
+      "requires_confirmation": false,
+      "title": "Handle Now",
+      "tradeoff_rules": [],
+      "vetoes": [
+        {
+          "constraint_id": "no_commitment_endangerment",
+          "reason": "do not select a candidate expected to create high risk to a fixed commitment",
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "action": "quick_triage_then_defer",
+      "candidate_id": "cand.quick_triage_then_defer",
+      "disabled_reason": "",
+      "enabled_reason": "baseline candidate for time-sensitive work-item decisions",
+      "expected_effect": {
+        "attention_cost": "low",
+        "commitment_risk": "low",
+        "expected_time_cost_minutes": 5.0,
+        "followup_needed": true,
+        "followup_summary": "Full handling remains after the fixed commitment.",
+        "reversibility": "high",
+        "work_item_risk_change": "reduced"
+      },
+      "intent": "Use a short window to reduce uncertainty, then defer full handling.",
+      "is_selected": false,
+      "key_constraints": [],
+      "requires_confirmation": false,
+      "title": "Quick Triage Then Defer",
+      "tradeoff_rules": [
+        {
+          "applied_to_selected": false,
+          "reason": "candidate is highly reversible under time pressure",
+          "rule_id": "prefer_reversible_under_time_pressure",
+          "status": "preferred"
+        }
+      ],
+      "vetoes": []
+    },
+    {
+      "action": "ignore_temporarily",
+      "candidate_id": "cand.ignore_temporarily",
+      "disabled_reason": "",
+      "enabled_reason": "baseline candidate for time-sensitive work-item decisions",
+      "expected_effect": {
+        "attention_cost": "none",
+        "commitment_risk": "low",
+        "expected_time_cost_minutes": 0.0,
+        "followup_needed": true,
+        "followup_summary": "The work item remains open with no status change.",
+        "reversibility": "high",
+        "work_item_risk_change": "increased"
+      },
+      "intent": "Preserve the current window and leave the work item unchanged for now.",
+      "is_selected": false,
+      "key_constraints": [
+        "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists"
+      ],
+      "requires_confirmation": false,
+      "title": "Ignore Temporarily",
+      "tradeoff_rules": [
+        {
+          "applied_to_selected": false,
+          "reason": "candidate is highly reversible under time pressure",
+          "rule_id": "prefer_reversible_under_time_pressure",
+          "status": "preferred"
+        }
+      ],
+      "vetoes": [
+        {
+          "constraint_id": "no_silent_blocker_ignore",
+          "reason": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "action": "delegate_to_executor",
+      "candidate_id": "cand.delegate_to_executor",
+      "disabled_reason": "",
+      "enabled_reason": "executor capability observation is available for triage",
+      "expected_effect": {
+        "attention_cost": "low",
+        "commitment_risk": "low",
+        "expected_time_cost_minutes": 10.0,
+        "followup_needed": true,
+        "followup_summary": "Executor result should be checked after delegation.",
+        "reversibility": "high",
+        "work_item_risk_change": "reduced"
+      },
+      "intent": "Use an available executor to reduce work-item risk without consuming the user's window.",
+      "is_selected": true,
+      "key_constraints": [],
+      "requires_confirmation": true,
+      "title": "Delegate To Executor",
+      "tradeoff_rules": [
+        {
+          "applied_to_selected": true,
+          "reason": "executor capability is available and available window is shorter than estimated work",
+          "rule_id": "prefer_delegate_when_executor_available_and_time_pressure",
+          "status": "preferred"
+        },
+        {
+          "applied_to_selected": false,
+          "reason": "candidate is highly reversible under time pressure",
+          "rule_id": "prefer_reversible_under_time_pressure",
+          "status": "preferred"
+        }
+      ],
+      "vetoes": []
+    }
+  ],
+  "decision_id": "decision.2026-04-17T06:00:00Z.workitem_github_dyalwayshappy_spice_123.3180cc52",
+  "decision_relevant_state_summary": {
+    "active_commitments": [
+      {
+        "constraint_hints": [
+          "do_not_be_late"
+        ],
+        "flexibility_hint": "fixed",
+        "id": "commitment.demo.flight",
+        "prep_start_time": "2026-04-17T06:12:00+00:00",
+        "priority_hint": "high",
+        "start_time": "2026-04-17T06:42:00+00:00",
+        "summary": "Leave for fixed commitment"
+      }
+    ],
+    "active_conflicts": [
+      {
+        "available_window_minutes": 12.0,
+        "estimated_work_minutes": 30.0,
+        "executor_available": true,
+        "severity": "high",
+        "type": "time_conflict"
+      },
+      {
+        "executor_available": true,
+        "severity": "info",
+        "type": "executor_capability_available"
+      }
+    ],
+    "available_window_minutes": 12.0,
+    "executor_available": true,
+    "now": "2026-04-17T06:00:00+00:00",
+    "open_work_items": [
+      {
+        "estimated_minutes_hint": 30.0,
+        "id": "workitem.github.dyalwayshappy_spice.123",
+        "kind": "pull_request",
+        "repo": "Dyalwayshappy/Spice",
+        "requires_attention": true,
+        "title": "Fix decision guidance validation",
+        "urgency_hint": "medium"
+      }
+    ]
+  },
+  "execution_boundary": {
+    "execution_path": "SDEP -> Hermes/Codex",
+    "executor": "codex",
+    "note": "Execution is downstream of decision selection and is shown separately from the compare object.",
+    "requires_confirmation": true,
+    "selected_action": "delegate_to_executor"
+  },
+  "expected_outcome_or_risk": {
+    "attention_cost": "low",
+    "commitment_risk": "low",
+    "expected_time_cost_minutes": 10.0,
+    "followup_needed": true,
+    "followup_summary": "Executor result should be checked after delegation.",
+    "reversibility": "high",
+    "work_item_risk_change": "reduced"
+  },
+  "outcome_return": {
+    "note": "",
+    "observation_type": ""
+  },
+  "score_breakdown": {
+    "candidates": {
+      "cand.delegate_to_executor": {
+        "action": "delegate_to_executor",
+        "constraints": [
+          {
+            "constraint_id": "no_commitment_endangerment",
+            "rule": "do not select a candidate expected to create high risk to a fixed commitment",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_silent_blocker_ignore",
+            "rule": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_executor_delegation_without_capability",
+            "rule": "do not select executor delegation unless an executor capability is explicitly available",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_low_confidence_irreversible_action",
+            "rule": "do not select a low-confidence irreversible action",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          }
+        ],
+        "dimensions": [
+          {
+            "contribution": 0.27,
+            "dimension": "commitment_safety",
+            "label": "Commitment Safety",
+            "value": 0.9,
+            "weight": 0.3
+          },
+          {
+            "contribution": 0.25,
+            "dimension": "work_item_risk_reduction",
+            "label": "Work-Item Risk Reduction",
+            "value": 1.0,
+            "weight": 0.25
+          },
+          {
+            "contribution": 0.135,
+            "dimension": "reversibility",
+            "label": "Reversibility",
+            "value": 0.9,
+            "weight": 0.15
+          },
+          {
+            "contribution": 0.07600000000000001,
+            "dimension": "confidence_alignment",
+            "label": "Confidence Alignment",
+            "value": 0.76,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.07500000000000001,
+            "dimension": "attention_preservation",
+            "label": "Attention Preservation",
+            "value": 0.75,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.016666666666666663,
+            "dimension": "time_efficiency",
+            "label": "Time Efficiency",
+            "value": 0.16666666666666663,
+            "weight": 0.1
+          }
+        ],
+        "score_total": 0.8226666666666667,
+        "tradeoff_rules": [
+          {
+            "applied_to_selected": true,
+            "reason": "executor capability is available and available window is shorter than estimated work",
+            "rule_id": "prefer_delegate_when_executor_available_and_time_pressure",
+            "status": "preferred"
+          },
+          {
+            "applied_to_selected": false,
+            "reason": "candidate is highly reversible under time pressure",
+            "rule_id": "prefer_reversible_under_time_pressure",
+            "status": "preferred"
+          }
+        ],
+        "vetoes": []
+      },
+      "cand.handle_now": {
+        "action": "handle_now",
+        "constraints": [
+          {
+            "constraint_id": "no_commitment_endangerment",
+            "rule": "do not select a candidate expected to create high risk to a fixed commitment",
+            "severity": "veto",
+            "status": "fail",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_silent_blocker_ignore",
+            "rule": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_executor_delegation_without_capability",
+            "rule": "do not select executor delegation unless an executor capability is explicitly available",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_low_confidence_irreversible_action",
+            "rule": "do not select a low-confidence irreversible action",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          }
+        ],
+        "dimensions": [
+          {
+            "contribution": 0.25,
+            "dimension": "work_item_risk_reduction",
+            "label": "Work-Item Risk Reduction",
+            "value": 1.0,
+            "weight": 0.25
+          },
+          {
+            "contribution": 0.0825,
+            "dimension": "reversibility",
+            "label": "Reversibility",
+            "value": 0.55,
+            "weight": 0.15
+          },
+          {
+            "contribution": 0.072,
+            "dimension": "confidence_alignment",
+            "label": "Confidence Alignment",
+            "value": 0.72,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.015000000000000013,
+            "dimension": "commitment_safety",
+            "label": "Commitment Safety",
+            "value": 0.050000000000000044,
+            "weight": 0.3
+          },
+          {
+            "contribution": 0.009999999999999998,
+            "dimension": "attention_preservation",
+            "label": "Attention Preservation",
+            "value": 0.09999999999999998,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.0,
+            "dimension": "time_efficiency",
+            "label": "Time Efficiency",
+            "value": 0.0,
+            "weight": 0.1
+          }
+        ],
+        "score_total": 0.42950000000000005,
+        "tradeoff_rules": [],
+        "vetoes": [
+          {
+            "constraint_id": "no_commitment_endangerment",
+            "reason": "do not select a candidate expected to create high risk to a fixed commitment",
+            "status": "fail"
+          }
+        ]
+      },
+      "cand.ignore_temporarily": {
+        "action": "ignore_temporarily",
+        "constraints": [
+          {
+            "constraint_id": "no_commitment_endangerment",
+            "rule": "do not select a candidate expected to create high risk to a fixed commitment",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_silent_blocker_ignore",
+            "rule": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+            "severity": "veto",
+            "status": "fail",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_executor_delegation_without_capability",
+            "rule": "do not select executor delegation unless an executor capability is explicitly available",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_low_confidence_irreversible_action",
+            "rule": "do not select a low-confidence irreversible action",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          }
+        ],
+        "dimensions": [
+          {
+            "contribution": 0.27,
+            "dimension": "commitment_safety",
+            "label": "Commitment Safety",
+            "value": 0.9,
+            "weight": 0.3
+          },
+          {
+            "contribution": 0.135,
+            "dimension": "reversibility",
+            "label": "Reversibility",
+            "value": 0.9,
+            "weight": 0.15
+          },
+          {
+            "contribution": 0.1,
+            "dimension": "time_efficiency",
+            "label": "Time Efficiency",
+            "value": 1.0,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.1,
+            "dimension": "attention_preservation",
+            "label": "Attention Preservation",
+            "value": 1.0,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.062,
+            "dimension": "confidence_alignment",
+            "label": "Confidence Alignment",
+            "value": 0.62,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.0,
+            "dimension": "work_item_risk_reduction",
+            "label": "Work-Item Risk Reduction",
+            "value": 0.0,
+            "weight": 0.25
+          }
+        ],
+        "score_total": 0.667,
+        "tradeoff_rules": [
+          {
+            "applied_to_selected": false,
+            "reason": "candidate is highly reversible under time pressure",
+            "rule_id": "prefer_reversible_under_time_pressure",
+            "status": "preferred"
+          }
+        ],
+        "vetoes": [
+          {
+            "constraint_id": "no_silent_blocker_ignore",
+            "reason": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+            "status": "fail"
+          }
+        ]
+      },
+      "cand.quick_triage_then_defer": {
+        "action": "quick_triage_then_defer",
+        "constraints": [
+          {
+            "constraint_id": "no_commitment_endangerment",
+            "rule": "do not select a candidate expected to create high risk to a fixed commitment",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_silent_blocker_ignore",
+            "rule": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_executor_delegation_without_capability",
+            "rule": "do not select executor delegation unless an executor capability is explicitly available",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          },
+          {
+            "constraint_id": "no_low_confidence_irreversible_action",
+            "rule": "do not select a low-confidence irreversible action",
+            "severity": "veto",
+            "status": "pass",
+            "supported": true
+          }
+        ],
+        "dimensions": [
+          {
+            "contribution": 0.27,
+            "dimension": "commitment_safety",
+            "label": "Commitment Safety",
+            "value": 0.9,
+            "weight": 0.3
+          },
+          {
+            "contribution": 0.25,
+            "dimension": "work_item_risk_reduction",
+            "label": "Work-Item Risk Reduction",
+            "value": 1.0,
+            "weight": 0.25
+          },
+          {
+            "contribution": 0.135,
+            "dimension": "reversibility",
+            "label": "Reversibility",
+            "value": 0.9,
+            "weight": 0.15
+          },
+          {
+            "contribution": 0.07800000000000001,
+            "dimension": "confidence_alignment",
+            "label": "Confidence Alignment",
+            "value": 0.78,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.07500000000000001,
+            "dimension": "attention_preservation",
+            "label": "Attention Preservation",
+            "value": 0.75,
+            "weight": 0.1
+          },
+          {
+            "contribution": 0.05833333333333333,
+            "dimension": "time_efficiency",
+            "label": "Time Efficiency",
+            "value": 0.5833333333333333,
+            "weight": 0.1
+          }
+        ],
+        "score_total": 0.8663333333333334,
+        "tradeoff_rules": [
+          {
+            "applied_to_selected": false,
+            "reason": "candidate is highly reversible under time pressure",
+            "rule_id": "prefer_reversible_under_time_pressure",
+            "status": "preferred"
+          }
+        ],
+        "vetoes": []
+      }
+    },
+    "selection_direction": "max"
+  },
+  "selected_recommendation": {
+    "action": "delegate_to_executor",
+    "candidate_id": "cand.delegate_to_executor",
+    "decision_basis": [
+      {
+        "candidate_id": "cand.delegate_to_executor",
+        "contribution": 0.27,
+        "dimension": "commitment_safety",
+        "evidence_source": "score_breakdown",
+        "kind": "weighted_dimension",
+        "label": "Commitment Safety",
+        "weight": 0.3
+      },
+      {
+        "candidate_id": "cand.delegate_to_executor",
+        "contribution": 0.25,
+        "dimension": "work_item_risk_reduction",
+        "evidence_source": "score_breakdown",
+        "kind": "weighted_dimension",
+        "label": "Work-Item Risk Reduction",
+        "weight": 0.25
+      },
+      {
+        "candidate_id": "cand.delegate_to_executor",
+        "evidence_source": "tradeoff_rules",
+        "kind": "tradeoff_rule",
+        "reason": "executor capability is available and available window is shorter than estimated work",
+        "rule_id": "prefer_delegate_when_executor_available_and_time_pressure",
+        "status": "preferred"
+      },
+      {
+        "candidate_id": "cand.delegate_to_executor",
+        "evidence_source": "tradeoff_rules",
+        "kind": "tradeoff_rule",
+        "reason": "candidate is highly reversible under time pressure",
+        "rule_id": "prefer_reversible_under_time_pressure",
+        "status": "preferred"
+      },
+      {
+        "candidate_id": "cand.delegate_to_executor",
+        "evidence_source": "constraints",
+        "kind": "constraint_clear",
+        "summary": "No hard-constraint veto was recorded for the selected candidate."
+      }
+    ],
+    "human_summary": "Delegate workitem.github.dyalwayshappy_spice.123 and review the outcome afterward.",
+    "reason_summary": [
+      "low commitment risk",
+      "work-item risk is reduced",
+      "executor available",
+      "time pressure favors delegation",
+      "unsafe alternatives vetoed: cand.handle_now, cand.ignore_temporarily",
+      "strong work_item_risk_reduction",
+      "strong commitment_safety"
+    ],
+    "requires_confirmation": true,
+    "selection_reason": "selected highest guided score after constraints and trade-off rules",
+    "title": "Delegate To Executor"
+  },
+  "trace_ref": "trace.70e8b53d4b6f",
+  "why_not_the_others": [
+    {
+      "candidate_id": "cand.handle_now",
+      "reasons": [
+        {
+          "constraint_id": "no_commitment_endangerment",
+          "evidence_source": "veto_events",
+          "kind": "veto",
+          "reason": "do not select a candidate expected to create high risk to a fixed commitment"
+        }
+      ],
+      "title": "Handle Now"
+    },
+    {
+      "candidate_id": "cand.quick_triage_then_defer",
+      "reasons": [
+        {
+          "evidence_source": "tradeoff_rules",
+          "kind": "tradeoff_rule",
+          "reason": "executor capability is available and available window is shorter than estimated work",
+          "rule_id": "prefer_delegate_when_executor_available_and_time_pressure",
+          "selected_candidate_id": "cand.delegate_to_executor"
+        }
+      ],
+      "title": "Quick Triage Then Defer"
+    },
+    {
+      "candidate_id": "cand.ignore_temporarily",
+      "reasons": [
+        {
+          "constraint_id": "no_silent_blocker_ignore",
+          "evidence_source": "veto_events",
+          "kind": "veto",
+          "reason": "do not silently ignore an attention-requiring work item when no status, delegation, or follow-up exists"
+        }
+      ],
+      "title": "Ignore Temporarily"
+    }
+  ]
+}
