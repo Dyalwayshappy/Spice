@@ -71,6 +71,29 @@ The report includes:
 - unsupported runtime semantics
 - how the active `decision.md` sections can influence selection
 
+## Compare A Decision Object
+
+Once a runtime or demo has exported a decision comparison artifact, you can
+inspect it directly:
+
+```sh
+python -m spice.entry decision compare \
+  --input examples/decision_hub_demo/compare_artifacts/meeting_vs_pr_conflict.json
+```
+
+This renders:
+
+- Decision-Relevant State
+- candidate decisions
+- score / contribution breakdown
+- vetoes and constraint status
+- trade-off rule effects
+- selected recommendation
+- why not the other candidates
+
+Use `--show-execution` to include the downstream execution boundary and `--json`
+to print the normalized comparison payload.
+
 ## Inspect The Support Contract
 
 `examples/decision_support.json` declares what an active policy or domain adapter supports:
