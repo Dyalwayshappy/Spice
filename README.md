@@ -857,7 +857,7 @@ PRs are welcome — the system is designed to be modular and extensible.
 ### Current
 
 - [x] Decision runtime (perception → state → decision → reflection)  
-- [x] [x] Integrated quickstart and domain scaffolding 
+- [x] Integrated quickstart and domain scaffolding 
 - [x] SDEP (Decision → Execution protocol)  
 - [x] Wrapper ecosystem for external agents  
 - [x] End-to-end loop (decision → execution → outcome)  
