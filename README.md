@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="spice_logo.png" alt="spice" width="500">
+  <img src="spice_image.jpg" alt="spice" width="500">
   <h1>Spice — The Decision Layer Above Agents</h1>
 
   
