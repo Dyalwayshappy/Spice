@@ -22,42 +22,36 @@
 
 > But they don’t know what to do next.
 
-**Spice** is a **decision-layer runtime — a brain above agents.** inspired by **the rise of execution agents like OpenClaw** and the idea of **world model**.
+**Spice** is a **decision-layer runtime — a brain above agents**, *inspired by the rise of execution agents like Claude Code, Codex, Hermes, and OpenClaw, and by the idea of a world model.*
 
-While execution agents (Claude Code, OpenClaw, Codex) are getting better at doing things,  
+
+Spice turns **messy context** into a **Decision Card**: options, scores, why/why-not, approval, and executor handoff.
+
+While execution agents are getting better at doing things,
+
 Spice focuses on the missing layer:
 
 👉 **What should be done next — and why.**
 
 ---
+## 30-second Aha Moment
 
-## 🎬 Demo of Spice：
-To gain a more intuitive understanding of Spice, 
 
-please visit our carefully prepared demo about conflicts between life and work events: [Spice-live-demo](https://www.bilibili.com/video/BV1rhDRB7Ehn/)
 
----
-### Demo Video
 
-1. Bilibili
 
-<div align="center">
-<a href="https://www.bilibili.com/video/BV1rhDRB7Ehn/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
 
-Click the image to watch the full demo video of using Spice to handle conflicts between the digital and physical worlds.
-</div>
 
----
 
-2. YouTube
 
-<div align="center">
-<a href="https://youtu.be/SNDsimjlvM4" target="_blank"><img src="spice_demo2.PNG" alt="Spice Demo Video" width="75%"/></a>
 
-Click the image to watch the full demo video of using Spice to handle conflicts between the digital and physical worlds.
-</div>
+
+
+
+
 
 ---
+
 
 
 
@@ -101,68 +95,6 @@ It allows AI systems to:
 ---
 
 
-## 🧩 Example: from idea → decision → next step 
-
-### 1. Scenario 
-
-> "I want to quickly build a lightweight tool for a small group of friends."
-
-A simple, real-world goal with clear constraints
-
-
-### 2. What Spice does
-
-#### Input: Real-world intent with constraints
-
-![demo1](./demo1.png)
-
-<p align="center"><em>starts from intent</em></p>
-
-
----
-
-
-#### Decision → Comparison
-
-![demo2](./demo2.png)
-
-<p align="center"><em>From options → structured decision space</em></p>
-
-
----
-
-
-#### Commitment → Next step
-
-![demo3](./demo3.png)
-
-
-<p align="center"><em>Decision becomes action</em></p>
-
-
----
-
-
-
-### 3. About execution (next step)
-
-Spice focuses on the **decision layer**.
-
-In a full workflow, the selected decision can be passed to external agents (e.g. codex and claude code) for execution.
-
-This example stops at decision + next step.
-
-➡️ Next, we will take this exact scenario and connect it to an external agent to **actually build the tool end-to-end**.
-
-> Decision → Execution → Outcome → Reflection
-
-<sub>This is the full loop Spice is designed to enable.</sub>
-
-
-
----
-
-
 ## 🌍 Domain-agnostic Runtime
 
 The underlying model is domain-agnostic.
@@ -185,6 +117,36 @@ Spice is not limited to one use case.
 
 It is a **foundation for building decision systems.**
 
+
+---
+
+
+## 🎬 Demo of Spice
+To gain a more intuitive understanding of Spice, 
+
+please visit our carefully prepared demo about conflicts between life and work events: [Spice-live-demo](https://www.bilibili.com/video/BV1rhDRB7Ehn/)
+
+---
+
+### Demo Video
+
+1. Bilibili
+
+<div align="center">
+<a href="https://www.bilibili.com/video/BV1rhDRB7Ehn/" target="_blank"><img src="spice_demo.PNG" alt="Spice Demo Video" width="75%"/></a>
+
+Click the image to watch the full demo video of using Spice to handle conflicts between the digital and physical worlds.
+</div>
+
+---
+
+2. YouTube
+
+<div align="center">
+<a href="https://youtu.be/SNDsimjlvM4" target="_blank"><img src="spice_demo2.PNG" alt="Spice Demo Video" width="75%"/></a>
+
+Click the image to watch the full demo video of using Spice to handle conflicts between the digital and physical worlds.
+</div>
 
 ---
 
