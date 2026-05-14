@@ -34,7 +34,7 @@ Spice focuses on the missing layer:
 👉 **What should be done next — and why.**
 
 ---
-## 30-second Aha Moment
+
 
 
 
