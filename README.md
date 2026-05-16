@@ -308,27 +308,32 @@ spice setup
 spice shell
 ```
 
-spice setup creates a local Spice workspace:
+**spice setup** initializes a local Spice workspace:
 
 ```text
 .spice/
   config.json          # LLM / executor / perception config
-  .env                 # optional saved API keys
   decision.md          # user-editable decision guidance
   state/state.json     # local decision state
   sessions/            # conversation/session records
   runs/                # run artifacts
   decisions/           # Decision Cards
   perceptions/         # workspace / URL / delegated perception artifacts
+  investigations/      # read-only investigation consent and records
   approvals/           # approval checkpoints
   outcomes/            # execution outcomes
+  conversations/       # shell conversation turns
   memory/              # decision memory and summaries
+  cache/               # runtime cache
+  executors/           # local executor metadata/config
+  skills/              # local skill metadata
+  .env                 # optional saved API keys, if configured during setup
 ```
 
 Then start a session:
 
 ```bash
-spice/spice shell
+spice shell
 ```
 
 Try:
@@ -336,7 +341,7 @@ Try:
 spice> Read this repo and tell me what we should prioritize next.
 spice> Why not option B?
 spice> Give me a two-week plan for A.
-spice> Execute the selected option.
+spice> /execute <approval_id>
 ```
 
 By default, Spice responds conversationally and keeps the audit card folded.
@@ -385,7 +390,7 @@ Supported LLM providers:
 | OpenAI | `openai` | `OPENAI_API_KEY` | Chat-completions compatible provider. |
 | Anthropic | `anthropic` | `ANTHROPIC_API_KEY` | Claude provider. |
 | DeepSeek | `deepseek` | `DEEPSEEK_API_KEY` | Works for normal responses; some flash models may be less stable for strict JSON simulation output. |
-| MiMo / Xiaomi | `mimo` | `XIAOMI_API_KEY` | MiMo provider support. |
+| MiMo / Xiaomi | `mimo` | `XIAOMI_API_KEY` or `MIMO_API_KEY` | MiMo provider support. |
 | Subprocess | `subprocess` | custom | Advanced local/custom provider path. |
 
 Spice uses the LLM for candidate expansion, semantic routing, simulation metadata, response composition, and follow-up understanding. Runtime guardrails still own execution boundaries, evidence checks, and approval rules.
@@ -449,7 +454,7 @@ Supported perception paths:
 | URL perception | User includes a URL | Web page text | Read-only. GitHub repo deep inspection is still being improved. |
 | Poll perception | `spice perceive --provider poll` | URL or explicit command output | Command polling requires explicit opt-in |
 | OpenChronicle | `spice perceive --provider open_chronicle` | OpenChronicle MCP context | Optional external perception provider |
-| Delegated perception | User asks for deeper external investigation | Findings/sources reported by an executor such as Hermes | Requires investigation consent; read-only; not execution |
+| Delegated perception | may trigger investigation consent | Findings/sources reported by an executor such as Hermes | Requires investigation consent; read-only; not execution |
 
 
 Examples:
@@ -470,7 +475,7 @@ Use /sources to inspect what Spice actually read.
 
 ---
 
-### 4. What Spice Tool Calls Are For
+### 4. What Spice Read-only Tools Are For
 
 Spice uses tool calls for perception, not uncontrolled execution.
 
