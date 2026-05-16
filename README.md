@@ -24,8 +24,11 @@
 
 **Spice** is a **decision-layer runtime — a brain above agents**, *inspired by the rise of execution agents like Claude Code, Codex, Hermes, and OpenClaw, and by the idea of a world model.*
 
+Spice controls agent actions before execution.
 
-Spice turns **messy context** into a **Decision Card**: options, scores, why/why-not, approval, and executor handoff.
+It turns messy context into source-backed, comparable, approval-aware decisions — before handing work to executors like Claude Code, Codex, Hermes, or OpenClaw.
+
+It helps you decide **what should happen next**, **why that option is better**, and **what evidence supports it**.
 
 While execution agents are getting better at doing things,
 
@@ -34,6 +37,10 @@ Spice focuses on the missing layer:
 👉 **What should be done next — and why.**
 
 ---
+
+## ❗️ 30s Dogfooding example
+
+
 
 
 
