@@ -40,7 +40,8 @@ Spice focuses on the missing layer:
 
 ## ❗️ 30s Dogfooding example
 
-In this demo, Spice is used to decide its own next step: **state-as-context**, **OpenChronicle proactive perception**, or **executor handoff**.  
+In this demo, Spice is used to decide its own next step: improving state-as-context, strengthening read-only workspace perception, or expanding executor handoff.
+
 The default view stays conversational, while `/details` expands the full auditable Decision Card.
 
 <table>
@@ -737,8 +738,6 @@ Reserved for future versions:
 
 For the full protocol contract, normative rules, JSON examples, and mapping details, see docs/sdep_v0_1.md.
 
-> Execution will become cheap and abundant.
-> Decision will become the bottleneck.
 
 ---
 
