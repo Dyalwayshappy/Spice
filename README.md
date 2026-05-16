@@ -80,66 +80,69 @@ The default view stays conversational, while `/details` expands the full auditab
 
 Today, we have powerful agents that can do almost anything:
 
-- write code  
-- analyze data  
+- write code
+- analyze data
+- browse tools
 - automate workflows
+- hand off tasks to other systems
 
-But when you sit down to use them, you still face the same problem:
+But in most agent systems, **decision and execution are tightly coupled**.
 
-**What should I do next?**
+Most agent benchmarks measure the final task result.
 
-That’s the hard part.
+That is useful, but it also means decision quality is usually inferred indirectly from outcomes:
 
-The real bottleneck is:
+```text
+final result = decision quality + tool ability + execution reliability + environment conditions
+```
 
-> **Decision-making.**
+When a task succeeds or fails, the most important part is often hard to inspect:
 
-Spice is designed to solve that.
+> **Why was this action chosen?**
+
+Spice separates the decision layer from the execution layer.
+
+Before an agent acts, Spice turns the next action into a source-backed, comparable, approval-aware decision:
+
+
+- what options were considered
+- what evidence supports them
+- why one action was selected
+- what trade-offs were rejected
+- whether execution should require approval
+
+```text
+Execution agents answer: how do we do it?
+
+Spice answers: should we do it, and why?
+```
 
 ---
 
 ## 🧠 What is Spice?
 
-Spice provides a structured cognitive loop inspired by the concept of world model :
+Spice is a **decision runtime for agentic AI systems**.
 
+It gives AI systems a structured loop:
+
+```text
 perception → state model → simulation → decision → execution → reflection
+```
 
 It allows AI systems to:
 
-- understand context (state)
+- understand context (Decision relevant state)
 - reason about possible futures (simulation)
 - make structured decisions (decision)
 - delegate actions to agents (execution)
 - learn from outcomes (Decision Evolution)
 
+Spice does not replace agents like Claude Code, Codex, Hermes, or OpenClaw.
+
+It gives them an auditable, traceable, and evolving decision layer before execution.
   
 ---
 
-
-## 🌍 Domain-agnostic Runtime
-
-The underlying model is domain-agnostic.
-
-Spice is a **general decision runtime** that can be applied to any domain where:
-
-- there is context (state)
-- there are possible futures (simulation)
-- decisions need to be made
-- actions can be executed by agents
-
-This includes:
-
-- individual decision making 
-- product and business strategy  
-- software development workflows  
-- operations and automation systems  
-
-Spice is not limited to one use case.
-
-It is a **foundation for building decision systems.**
-
-
----
 
 
 ## 🎬 Demo of Spice
@@ -181,44 +184,76 @@ Click the image to watch the full demo video of using Spice to handle conflicts 
 
 ---
 
-## 🧭 User Interface: decision.md
+## 🧭 Decision Guidance: decision.md
 
-The main user-facing interface in Spice is `decision.md`.
+The easiest way to use Spice locally is the interactive decision shell:
 
-Users configure how Spice should compare candidate decisions by editing:
+```bash
+spice setup
+spice shell
+```
+In a workspace initialized by **spice setup**, local decision guidance lives at:
 
 ```text
-.spice/decision/decision.md
+.spice/decision.md
 ```
 
-This file is decision guidance. It is not memory, not a prompt dump, not an execution runbook, and not an agent workflow.
+**decision.md** tells Spice how to compare candidate decisions within the capabilities supported by the active runtime and policy adapter.
 
-Runtime-active in v1:
 
-- **Primary Objective** — the dominant optimization direction
-- **Preferences / Weights** — score dimensions used during candidate comparison
-- **Hard Constraints** — veto boundaries, when supported by the active policy/domain adapter
-- **Trade-off Rules** — a constrained executable subset for resolving conflicts
+It can guide:
 
-Runtime-inactive in v1:
+- what Spice optimizes for
+- how trade-offs are weighted
+- which constraints should matter
+- what kinds of decisions should be preferred or avoided
 
-- **Decision Principles**
-- **Evaluation Criteria**
-- **Reflection Guidance**
+> decision.md is decision guidance.
 
-The bundled default profile is a starter template. Users should edit their local `decision.md`; they should not edit support JSON as normal configuration.
+It is not:
 
-Runtime support comes from the active policy or domain adapter. The copied support JSON is only for explain/demo/debug flows.
+- memory
+- a prompt dump
+- an execution script
+- an agent workflow
+- a tool permission file
 
-See `docs/decision.md` and `docs/decision_quickstart.md` for the support contract and quickstart.
+Editing **decision.md** can change how Spice ranks and explains options, but it does not grant execution capability. Execution still goes through runtime guardrails, approval boundaries, and configured executors.
 
+A typical flow looks like:
+
+```bash
+spice setup
+$EDITOR .spice/decision.md
+spice shell
+```
+
+
+Then ask Spice what to do next:
+```text
+spice> Read this repo and tell me what we should prioritize next.
+```
+
+Spice will respond conversationally by default, while keeping the full audit trail available through commands like:
+
+```text
+/details    expand the full Decision Card
+/sources    show evidence used
+/why        explain trade-offs
+/sim        show simulation
+/json       inspect raw artifacts
+```
+
+Advanced profile/demo flows may also use .spice/decision/decision.md, especially in the older quickstart and domain-adapter examples. For the current interactive runtime, .spice/decision.md is the default local decision guidance file.
+
+See docs/decision.md and docs/decision_quickstart.md for the full guidance contract.
 
 ---
 
 
-##  ⚙ Install(Extend the Spice framework to other domains)
+##  ⚙ Install
 
-**Install from source (latest features, for development)**
+**Install from source**
 
 ```bash
 
@@ -232,18 +267,30 @@ pip install -U pip
 pip install -e .
 ```
 
+Then verify:
+
+```bash
+spice --help
+```
+
 **Install from PyPI (stable, recommended)**
 
 ```bash
 pip install spice-runtime
 ```
 
-##  Upgrade to latest version
+Then verify the CLI:
+
+```bash
+spice --help
+```
+
+##  Upgrade
 
 ```bash
 pip install -U spice-runtime
-spice --help
 ```
+
 
 
 
@@ -253,236 +300,316 @@ spice --help
 
 ## 🚀 Quick Start
 
-The fastest way to experience Spice is the integrated quickstart:
+The fastest way to try Spice is the interactive decision shell.
+
+```bash
+pip install spice-runtime
+spice setup
+spice shell
+```
+
+spice setup creates a local Spice workspace:
+
+```text
+.spice/
+  config.json          # LLM / executor / perception config
+  .env                 # optional saved API keys
+  decision.md          # user-editable decision guidance
+  state/state.json     # local decision state
+  sessions/            # conversation/session records
+  runs/                # run artifacts
+  decisions/           # Decision Cards
+  perceptions/         # workspace / URL / delegated perception artifacts
+  approvals/           # approval checkpoints
+  outcomes/            # execution outcomes
+  memory/              # decision memory and summaries
+```
+
+Then start a session:
+
+```bash
+spice/spice shell
+```
+
+Try:
+```text
+spice> Read this repo and tell me what we should prioritize next.
+spice> Why not option B?
+spice> Give me a two-week plan for A.
+spice> Execute the selected option.
+```
+
+By default, Spice responds conversationally and keeps the audit card folded.
+
+Useful shell commands:
+
+```text
+/details     expand the full Decision Card
+/sources     show evidence and sources used
+/why         explain why the selected option won
+/sim         show simulation metadata
+/json        inspect raw artifacts
+/context     inspect compiled decision context
+/workspace   inspect workspace perception
+/refine      adjust the latest decision
+/execute     request approval-gated execution
+/help        show shell commands
+```
+
+---
+
+### 1. Configure A Model
+
+You can configure an LLM during spice setup, or later:
+
+```bash
+spice config enable-llm \
+  --provider openrouter \
+  --model minimax/minimax-m2.7
+```
+
+Spice will read the API key from the provider-specific environment variable.
+
+Example:
+```bash
+export OPENROUTER_API_KEY="your-openrouter-api-key"
+spice shell
+```
+
+Supported LLM providers:
+
+| Provider | Config value | API key env | Notes |
+|:---|:---|:---|:---|
+| Deterministic | `deterministic` | none | No hosted model. Useful for smoke tests and fallback behavior. |
+| OpenRouter | `openrouter` | `OPENROUTER_API_KEY` | Recommended first hosted path. Works with models such as `minimax/minimax-m2.7`. |
+| OpenAI | `openai` | `OPENAI_API_KEY` | Chat-completions compatible provider. |
+| Anthropic | `anthropic` | `ANTHROPIC_API_KEY` | Claude provider. |
+| DeepSeek | `deepseek` | `DEEPSEEK_API_KEY` | Works for normal responses; some flash models may be less stable for strict JSON simulation output. |
+| MiMo / Xiaomi | `mimo` | `XIAOMI_API_KEY` | MiMo provider support. |
+| Subprocess | `subprocess` | custom | Advanced local/custom provider path. |
+
+Spice uses the LLM for candidate expansion, semantic routing, simulation metadata, response composition, and follow-up understanding. Runtime guardrails still own execution boundaries, evidence checks, and approval rules.
+
+---
+
+
+### 2. Configure An Executor
+
+Execution is optional.
+
+Spice can make decisions without executing anything. If you configure an executor, Spice still requires approval before crossing the execution boundary.
+
+Supported executors:
+
+| Executor | Config value | What it is for | Boundary |
+|:---|:---|:---|:---|
+| Dry run | `dry_run` | Local no-op execution preview | Safe default |
+| SDEP subprocess | `sdep_subprocess` | Any local executor that speaks SDEP over subprocess | Protocol boundary |
+| Codex | `codex` | Handoff to Codex CLI | Approval-gated |
+| Claude Code | `claude_code` | Handoff to Claude Code CLI | Approval-gated |
+| Hermes | `hermes` | Handoff to Hermes CLI | Approval-gated |
+
+
+
+Check executor status:
+
+```bash
+spice executor list
+spice executor doctor
+```
+
+Execute only after approval:
+
+```bash
+spice approval list
+spice approval approve <approval_id>
+spice execute <approval_id>
+```
+
+Spice separates decision from execution:
+
+```text
+Spice decides what should happen next.
+Executors do the work after approval.
+```
+
+---
+
+
+### 3.Configure Perception
+
+Perception is how Spice gathers decision-relevant evidence.
+
+Supported perception paths:
+
+| Perception path | How it is triggered | What it reads | Notes |
+|:---|:---|:---|:---|
+| Manual input | User message / shell | User-provided context | Always available |
+| Workspace perception | User asks about repo/files/current implementation | Local workspace files, git status, repo map, package metadata, tests, symbols | Read-only; does not write or run tests |
+| URL perception | User includes a URL | Web page text | Read-only. GitHub repo deep inspection is still being improved. |
+| Poll perception | `spice perceive --provider poll` | URL or explicit command output | Command polling requires explicit opt-in |
+| OpenChronicle | `spice perceive --provider open_chronicle` | OpenChronicle MCP context | Optional external perception provider |
+| Delegated perception | User asks for deeper external investigation | Findings/sources reported by an executor such as Hermes | Requires investigation consent; read-only; not execution |
+
+
+Examples:
+
+```bash
+spice perceive --provider poll --poll-url "https://example.com/status"
+spice perceive --provider open_chronicle
+```
+
+In the shell, Spice can automatically trigger read-only workspace or URL perception when the user asks for evidence:
+
+```text
+spice> Read this repo and tell me what is missing.
+spice> Based on this URL, what should we do next? https://example.com/spec
+```
+
+Use /sources to inspect what Spice actually read.
+
+---
+
+### 4. What Spice Tool Calls Are For
+
+Spice uses tool calls for perception, not uncontrolled execution.
+
+Read-only perception tools may inspect:
+
+```text
+repo_map
+search
+read_file
+git_status
+git_diff
+git_log
+read_package_metadata
+read_test_structure
+python_symbol_index
+read_python_symbol
+fetch_url
+```
+
+These tools are used to build source-backed decision context.
+
+They are not allowed to:
+
+```text
+write files
+patch code
+delete or move files
+install packages
+run tests
+run terminal commands
+execute side-effect tasks
+```
+
+If a decision needs side effects, Spice creates an approval checkpoint first.
+
+If a task needs deeper external research, Spice can ask for investigation consent and delegate a read-only investigation to an executor. That is separate from execution approval.
+
+
+```text
+local perception -> delegated read-only investigation -> approval-gated execution
+```
+
+---
+
+### 5. Edit decision.md
+
+The main user-editable decision guidance file is:
+
+```text
+.spice/decision.md
+```
+
+Edit it to change how Spice compares options:
+```bash
+$EDITOR .spice/decision.md
+```
+
+**decision.md** can influence preferences, constraints, trade-offs, and decision style.
+
+Editing decision.md does not grant execution capability. Execution still goes through runtime guardrails and approval boundaries.
+
+---
+
+### 6. Run One-Off CLI Decisions
+
+You can also use Spice without entering the shell.
+
+Advisory decision:
+
+```bash
+spice decide "What should we prioritize next?" --advise
+```
+
+One-shot run:
+```bash
+spice run --once "Read this repo and suggest the safest next action"
+```
+
+JSON artifact output:
+```bash
+spice run --once "What should we do next?" --json
+```
+
+Refine the latest decision:
+```bash
+spice refine "Assume we only have one developer for two weeks."
+```
+
+Inspect session history:
+```bash
+spice session list
+spice session current
+spice session timeline session.default
+```
+
+Check workspace health:
+```bash
+spice doctor
+```
+
+---
+
+### 7. Legacy Quickstart And Domain Demos
+
+The older framework quickstart is still available for people building custom domains or studying the deterministic core loop:
 
 ```bash
 spice quickstart --force
 ```
 
-This starts from the bundled example domain and walks through the full Spice boundary:
-
-```text
-decision.md -> example domain runtime -> OpenRouter/local LLM -> optional SDEP execution boundary
-```
-
-It creates:
-
-```text
-.spice/quickstart/                         # deterministic core-loop example
-.spice/quickstart_llm/                     # LLM-ready example runtime
-.spice/decision/decision.md                # user-editable decision profile
-.spice/decision/support/default_support.json
-```
-
-The generated example runs immediately with deterministic defaults. No API key is required for the first run.
-
-### What The Quickstart Shows
-
-```text
-perception -> state -> decision -> execution -> reflection
-```
-
-The default quickstart proves that Spice can:
-
-- load a decision profile
-- validate and explain decision guidance
-- run a domain-specific decision loop
-- attach model advisory through an explicit provider
-- keep execution external, pluggable, and auditable through SDEP
-
-
-The bundled quickstart domain is an example. Real projects define their own `DomainSpec`, domain adapter, supported score dimensions, constraint checks, and SDEP execution boundary.
-
-### Core-only Mode
-
-If you only want to see the deterministic Spice core loop:
-
+Core-only mode:
 ```bash
 spice quickstart --core-only --force
 ```
 
-This creates only:
-
+That flow creates example artifacts under:
 ```text
 .spice/quickstart/
-```
-
-Use this when you want to inspect the smallest loop without LLM wiring or `decision.md` setup.
-
-### 1. Edit decision.md
-
-The main user-editable file is:
-
-```text
+.spice/quickstart_llm/
 .spice/decision/decision.md
+.spice/decision/support/default_support.json
 ```
 
-The safest first customization is the scoring weights:
+Use this path if you are building a custom **DomainSpec**, policy adapter, or SDEP executor demo.
 
-```md
-Preferences:
-- outcome_value: 0.40
-- risk_reduction: 0.25
-- reversibility: 0.20
-- confidence_alignment: 0.15
-```
-
-For example, to prefer safer and more reversible decisions:
-
-```md
-Preferences:
-- outcome_value: 0.25
-- risk_reduction: 0.35
-- reversibility: 0.25
-- confidence_alignment: 0.15
-```
-
-`decision.md` configures decision selection. It is not memory, an agent prompt, or an execution script.
-
-### 2. Validate And Explain
+For the current interactive product experience, start with:
 
 ```bash
-spice decision explain .spice/decision/decision.md --support-json .spice/decision/support/default_support.json
-```
-
-Use `--json` for structured output.
-
-The explanation shows:
-
-- loaded artifact id/version
-- validation status
-- runtime-active and runtime-inactive sections
-- supported and unsupported score dimensions
-- supported and unsupported hard constraints
-- supported and unsupported trade-off rules
-
-Runtime support comes from the active policy or domain adapter. Editing support JSON alone does not add runtime capability.
-
-### 3. Use OpenRouter
-
-Attach a hosted model to the generated example runtime:
-
-```bash
-export OPENROUTER_API_KEY="your-openrouter-api-key"
-export SPICE_DOMAIN_MODEL="openrouter:anthropic/claude-3.5-sonnet"
-python .spice/quickstart_llm/run_demo.py
-```
-
-Optional OpenRouter attribution headers:
-
-```bash
-export SPICE_OPENROUTER_SITE_URL="https://github.com/Dyalwayshappy/Spice"
-export SPICE_OPENROUTER_APP_NAME="Spice"
-```
-
-### 4. Use A Local Or Custom Model
-
-```bash
-SPICE_DOMAIN_MODEL="ollama run qwen2.5" python .spice/quickstart_llm/run_demo.py
-```
-
-Model selection is explicit:
-
-- `deterministic` uses the built-in deterministic provider
-- `openrouter:<model-id>` uses the OpenRouter provider
-- any other value is treated as a subprocess command
-
-Any subprocess command must read a prompt from stdin and return structured model output. Spice does not auto-load hidden model configuration in v1.
-
-### 5. Use decision.md In Runtime Code
-
-The quickstart shows the file-based configuration flow. In application code, attach the profile explicitly:
-
-```python
-from spice.decision import guided_policy_from_profile
-
-policy = guided_policy_from_profile(
-    base_policy,
-    ".spice/decision/decision.md",
-)
-```
-
-The active policy/domain adapter remains the source of runtime capability.
-
-### 6. Connect An External Execution Agent
-
-Models help Spice reason, simulate, and advise. External agents execute when you choose to connect them.
-
-```text
-Decision -> ExecutionIntent -> external agent -> ExecutionResult -> Outcome -> Reflection
-```
-
-Run the included SDEP execution demo:
-
-```bash
-python examples/sdep_agent_demo/run_sdep_adapter_demo.py
-```
-
-For production integrations, SDEP is the execution boundary:
-
-- Spice produces a structured execution intent
-- external agents execute through SDEP
-- execution results return as structured outcomes
-- Spice absorbs decision-relevant outcomes without owning execution internals
-
-Mock and direct command executors are local test/debug utilities. They are not the recommended public execution path.
-
-Execution is optional and pluggable, but when Spice talks to external agents, SDEP is the canonical boundary. It is not mixed into `decision.md`.
-
-
-### 7. Latest User Experience Flow
-
-```text
-1. clone and install Spice
-2. run spice quickstart
-3. edit .spice/decision/decision.md
-4. validate with spice decision explain
-5. choose OpenRouter, deterministic, or local subprocess model
-6. run the example domain
-7. replace the example domain with your own DomainSpec/domain adapter
-8. optionally connect external execution agents through SDEP
+spice setup
+spice shell
 ```
 
 
 
----
 
-## 🔁 Spice + Hermes Reference Integration
 
-Spice includes a working reference integration with Hermes to demonstrate the full decision-to-execution loop.
 
-```text
-WhatsApp / GitHub signal
--> Spice-Hermes Bridge
--> Spice decision_hub_demo
--> WorldState / ActiveDecisionContext
--> structured simulation
--> decision.md guided selection
--> SDEP execute.request
--> Hermes/Codex execution
--> SDEP execute.response
--> execution_result_observed
--> Spice state update
-```
 
-This integration demonstrates the intended separation:
 
-- **Spice** handles state, simulation, decision selection, and decision evolution
-- **Hermes** handles messaging ingress and execution
-- **SDEP** is the execution boundary between decision and execution
-- **Bridge** converts external signals and execution outcomes into structured Spice observations
-
-This is a reference integration, not Spice core.
-
-Start here:
-
-- `spice-hermes-bridge/README.md` — run the local WhatsApp + Hermes + Spice loop
-- `examples/decision_hub_demo/` — simulation-driven decision demo domain
-- `examples/sdep_quickstart/` — build an SDEP executor
-- `schemas/sdep/v0.1/` — SDEP JSON Schemas
-- `examples/sdep_payloads/v0.1/` — SDEP example payloads
-
-Use this section to understand how Spice sits above execution agents without becoming an execution framework.
 
 
 ---
