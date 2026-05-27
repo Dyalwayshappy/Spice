@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from spice.runtime.executor_discovery import detect_executor_cli
+from spice.runtime.executor_discovery import detect_executor_cli, detect_known_executor_clis
 
 
 class ExecutorDiscoveryTests(unittest.TestCase):
@@ -18,6 +18,17 @@ class ExecutorDiscoveryTests(unittest.TestCase):
         self.assertEqual(detection.status, "ready")
         self.assertEqual(detection.command, "codex")
         self.assertEqual(detection.executable_path, "/usr/local/bin/codex")
+
+    def test_detects_openclaw_cli_from_path_lookup(self) -> None:
+        detection = detect_executor_cli(
+            "openclaw",
+            which=lambda command: f"/usr/local/bin/{command}",
+            search_paths=[],
+        )
+
+        self.assertEqual(detection.status, "ready")
+        self.assertEqual(detection.command, "openclaw")
+        self.assertEqual(detection.executable_path, "/usr/local/bin/openclaw")
 
     def test_detects_executable_outside_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -56,6 +67,15 @@ class ExecutorDiscoveryTests(unittest.TestCase):
 
         self.assertEqual(detection.status, "unsupported")
         self.assertIn("supports codex", detection.detail)
+        self.assertIn("openclaw", detection.detail)
+
+    def test_known_executor_detection_includes_openclaw(self) -> None:
+        detections = detect_known_executor_clis()
+
+        self.assertIn("codex", detections)
+        self.assertIn("claude_code", detections)
+        self.assertIn("hermes", detections)
+        self.assertIn("openclaw", detections)
 
 
 if __name__ == "__main__":

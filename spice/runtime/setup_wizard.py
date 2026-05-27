@@ -38,6 +38,7 @@ EXECUTOR_CHOICES: tuple[tuple[str, str, str], ...] = (
     ("codex", "Codex", ""),
     ("claude_code", "Claude Code", "claude -p"),
     ("hermes", "Hermes", "hermes chat -Q"),
+    ("openclaw", "OpenClaw", "openclaw agent --json --message"),
 )
 
 EXECUTOR_PERMISSION_CHOICES: tuple[tuple[str, str, str], ...] = (
@@ -296,7 +297,11 @@ def _ask_executor_config(
         output_stream=output_stream,
     )
     _, _, default_command = _choice_by_id(EXECUTOR_CHOICES, executor)
-    detection = detect_executor_cli(executor) if executor in {"codex", "claude_code", "hermes"} else None
+    detection = (
+        detect_executor_cli(executor)
+        if executor in {"codex", "claude_code", "hermes", "openclaw"}
+        else None
+    )
     if detection is not None:
         _write(output_stream, _render_selected_executor_detection(detection))
         if detection.status == "ready" and detection.command:
@@ -340,8 +345,19 @@ def _ask_executor_config(
             executor_permission_mode=permission_mode,
         )
         _write(output_stream, f"Resolved executor command: {runtime.command}")
-        if runtime.permission_enforcement == "delegated_to_executor":
-            _write(output_stream, "Permission enforcement is delegated to the selected executor CLI.")
+        if runtime.permission_enforcement in {"delegated_to_executor", "executor_policy"}:
+            _write(output_stream, "Permission enforcement is controlled by the selected executor CLI.")
+        if executor == "openclaw":
+            recommended = runtime.metadata.get("recommended_policy", {})
+            if isinstance(recommended, dict):
+                policy = recommended.get(permission_mode)
+                if policy:
+                    _write(output_stream, f"OpenClaw recommended policy for {permission_mode}: {policy}")
+            _write(
+                output_stream,
+                "Inspect OpenClaw policy with `openclaw exec-policy show --json` "
+                "and `openclaw sandbox explain --json`.",
+            )
         payload["executor_command"] = ""
     _write(output_stream, "Execution remains approval-gated before any handoff.")
 
@@ -357,6 +373,8 @@ def _default_executor_command_for_runtime(
         return f"{command} -p"
     if executor_id == "hermes":
         return f"{command} chat -Q"
+    if executor_id == "openclaw":
+        return f"{command} agent --json --message"
     return command
 
 
@@ -367,9 +385,10 @@ def _render_executor_detection_summary(
         "codex": "Codex CLI",
         "claude_code": "Claude Code CLI",
         "hermes": "Hermes CLI",
+        "openclaw": "OpenClaw CLI",
     }
     lines = ["Detected executor CLIs"]
-    for executor_id in ("codex", "claude_code", "hermes"):
+    for executor_id in ("codex", "claude_code", "hermes", "openclaw"):
         detection = detections.get(executor_id)
         if detection is None:
             continue

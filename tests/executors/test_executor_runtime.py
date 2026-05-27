@@ -72,6 +72,10 @@ class ExecutorRuntimeResolverTests(unittest.TestCase):
             "claude -p --permission-mode acceptEdits",
         )
         self.assertEqual(resolve_executor_runtime("hermes").command, "hermes chat -Q")
+        self.assertEqual(
+            resolve_executor_runtime("openclaw").command,
+            "openclaw agent --json --message",
+        )
 
     def test_codex_permission_modes_resolve_to_sandbox_flags(self) -> None:
         read_only = resolve_executor_runtime("codex", executor_permission_mode="read_only")
@@ -100,6 +104,25 @@ class ExecutorRuntimeResolverTests(unittest.TestCase):
         self.assertEqual(workspace.command, "hermes chat -Q")
         self.assertEqual(danger.command, "hermes chat --yolo -Q")
         self.assertEqual(read_only.permission_enforcement, "command_flag")
+
+    def test_openclaw_permission_modes_defer_to_executor_policy(self) -> None:
+        read_only = resolve_executor_runtime("openclaw", executor_permission_mode="read_only")
+        workspace = resolve_executor_runtime("openclaw", executor_permission_mode="workspace_write")
+        danger = resolve_executor_runtime("openclaw", executor_permission_mode="danger_full_access")
+
+        self.assertEqual(read_only.command, "openclaw agent --json --message")
+        self.assertEqual(workspace.command, "openclaw agent --json --message")
+        self.assertEqual(danger.command, "openclaw agent --json --message")
+        self.assertEqual(read_only.permission_enforcement, "executor_policy")
+        self.assertEqual(workspace.permission_enforcement, "executor_policy")
+        self.assertEqual(danger.permission_enforcement, "executor_policy")
+        self.assertEqual(read_only.permission_mode, "read_only")
+        self.assertEqual(workspace.permission_mode, "workspace_write")
+        self.assertEqual(danger.permission_mode, "danger_full_access")
+        self.assertEqual(
+            read_only.metadata["recommended_policy"]["workspace_write"],
+            "cautious",
+        )
 
     def test_codex_accepts_configured_command(self) -> None:
         runtime = resolve_executor_runtime("codex", executor_command=sys.executable)
@@ -159,6 +182,15 @@ class ExecutorRuntimeResolverTests(unittest.TestCase):
         self.assertEqual(runtime.command_path, sys.executable)
         self.assertTrue(runtime.real_executor)
 
+    def test_openclaw_accepts_configured_command(self) -> None:
+        runtime = resolve_executor_runtime("openclaw", executor_command=sys.executable)
+
+        self.assertEqual(runtime.status, "ready")
+        self.assertEqual(runtime.command, sys.executable)
+        self.assertEqual(runtime.command_path, sys.executable)
+        self.assertTrue(runtime.real_executor)
+        self.assertEqual(runtime.permission_enforcement, "executor_policy")
+
     def test_command_is_parsed_without_shell(self) -> None:
         runtime = resolve_executor_runtime(
             "sdep_subprocess",
@@ -185,6 +217,7 @@ class ExecutorRuntimeResolverTests(unittest.TestCase):
         specs = executor_runtime_specs()
 
         self.assertIn("dry_run", specs)
+        self.assertIn("openclaw", specs)
         specs.pop("dry_run")
         self.assertIn("dry_run", executor_runtime_specs())
 

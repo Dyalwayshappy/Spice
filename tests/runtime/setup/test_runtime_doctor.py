@@ -418,6 +418,50 @@ class RuntimeDoctorTests(unittest.TestCase):
             self.assertEqual(names["executor_command"].status, "ok")
             self.assertEqual(names["executor_command"].detail, sys.executable)
 
+    def test_doctor_accepts_openclaw_executor_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            setup_workspace(project_root=tmp_dir)
+            config_path = Path(tmp_dir) / ".spice" / "config.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["executor"] = "openclaw"
+            config["executor_command"] = sys.executable
+            config_path.write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+            report = run_doctor(tmp_dir)
+            names = {check.name: check for check in report.checks}
+
+            self.assertEqual(names["executor"].status, "ok")
+            self.assertEqual(names["executor"].detail, "openclaw")
+            self.assertEqual(names["executor runtime"].status, "ok")
+            self.assertIn("permission_enforcement=executor_policy", names["executor runtime"].detail)
+            self.assertEqual(names["executor_command"].status, "ok")
+            self.assertEqual(names["executor_command"].detail, sys.executable)
+
+    def test_doctor_reports_openclaw_cli_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            setup_workspace(project_root=tmp_dir)
+            config_path = Path(tmp_dir) / ".spice" / "config.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["executor"] = "openclaw"
+            config["executor_command"] = "openclaw agent --json --message"
+            config_path.write_text(json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            detection = ExecutorCLIDetection(
+                executor_id="openclaw",
+                command_name="openclaw",
+                status="ready",
+                command="openclaw",
+                executable_path="/usr/local/bin/openclaw",
+                detail="openclaw found on PATH: /usr/local/bin/openclaw",
+            )
+
+            with patch("spice.runtime.doctor.detect_executor_cli", return_value=detection):
+                report = run_doctor(tmp_dir)
+
+            names = {check.name: check for check in report.checks}
+            self.assertEqual(names["executor cli"].status, "ok")
+            self.assertIn("openclaw found", names["executor cli"].detail)
+            self.assertEqual(names["executor cli"].metadata["status"], "ready")
+
     def test_doctor_checks_poll_perception_url(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             setup_workspace(project_root=tmp_dir)

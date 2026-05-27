@@ -189,7 +189,21 @@ def _runtime_mode(config: dict[str, Any]) -> str:
         return "decision + dry-run"
     if executor == "dry_run":
         return "LLM decision + dry-run"
-    return "configured executor handoff"
+    executor_name = _executor_name(executor)
+    if llm == "deterministic":
+        return f"decision + {executor_name} handoff"
+    return f"LLM decision + {executor_name} handoff"
+
+
+def _executor_name(executor_id: str) -> str:
+    normalized = executor_id.strip().lower()
+    return {
+        "sdep_subprocess": "SDEP executor",
+        "codex": "Codex",
+        "claude_code": "Claude Code",
+        "hermes": "Hermes",
+        "openclaw": "OpenClaw",
+    }.get(normalized, normalized or "executor")
 
 
 def _llm_label(config: dict[str, Any]) -> str:

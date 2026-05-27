@@ -414,6 +414,18 @@ Supported executors:
 | Codex | `codex` | Handoff to Codex CLI | Approval-gated |
 | Claude Code | `claude_code` | Handoff to Claude Code CLI | Approval-gated |
 | Hermes | `hermes` | Handoff to Hermes CLI | Approval-gated |
+| OpenClaw | `openclaw` | Handoff to OpenClaw CLI / Gateway | Approval-gated; permissions governed by OpenClaw exec-policy |
+
+For OpenClaw, Spice controls the approval boundary. OpenClaw controls actual tool permissions through exec-policy, approvals, and sandbox config.
+
+Use:
+
+```bash
+openclaw exec-policy show --json
+openclaw sandbox explain --json
+```
+
+to inspect the effective policy.
 
 
 

@@ -349,7 +349,7 @@ def _compact_executor_affordance(payload: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _compact_executor_capabilities(payload: Mapping[str, Any]) -> dict[str, Any]:
-    return {
+    compact = {
         "executor_id": str(payload.get("executor_id") or ""),
         "provider": str(payload.get("provider") or ""),
         "status": str(payload.get("status") or ""),
@@ -360,6 +360,34 @@ def _compact_executor_capabilities(payload: Mapping[str, Any]) -> dict[str, Any]
         "summary": _shorten(str(payload.get("summary") or ""), 360),
         "limitations": [_shorten(item, 220) for item in _strings(payload.get("limitations"))[:6]],
     }
+    metadata = _compact_executor_capability_metadata(_mapping(payload.get("metadata")))
+    if metadata:
+        compact["metadata"] = metadata
+    return compact
+
+
+def _compact_executor_capability_metadata(payload: Mapping[str, Any]) -> dict[str, Any]:
+    allowed_scalar_keys = (
+        "routing_model",
+        "permission_enforcement",
+        "permission_note",
+    )
+    compact: dict[str, Any] = {}
+    for key in allowed_scalar_keys:
+        value = str(payload.get(key) or "").strip()
+        if value:
+            compact[key] = _shorten(value, 260)
+    policy_commands = _strings(payload.get("policy_commands"))[:4]
+    if policy_commands:
+        compact["policy_commands"] = [_shorten(item, 180) for item in policy_commands]
+    recommended_policy = _mapping(payload.get("recommended_policy"))
+    if recommended_policy:
+        compact["recommended_policy"] = {
+            str(key): _shorten(str(value or ""), 180)
+            for key, value in sorted(recommended_policy.items(), key=lambda item: str(item[0]))
+            if str(key).strip() and str(value or "").strip()
+        }
+    return compact
 
 
 def _compact_workspace_context(payload: Mapping[str, Any]) -> dict[str, Any]:

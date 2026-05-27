@@ -626,7 +626,10 @@ def _executor_check(config: SpiceWorkspaceConfig | None) -> DoctorCheck:
             "executor",
             "fail",
             runtime.executor_id,
-            next_step="Set executor to dry_run, codex, claude_code, hermes, or sdep_subprocess.",
+            next_step=(
+                "Set executor to dry_run, codex, claude_code, hermes, "
+                "openclaw, or sdep_subprocess."
+            ),
             metadata=runtime.to_payload(),
         )
     return DoctorCheck(
@@ -646,7 +649,10 @@ def _executor_runtime_check(config: SpiceWorkspaceConfig | None) -> DoctorCheck:
             "executor runtime",
             "fail",
             runtime.detail,
-            next_step="Set executor to dry_run, codex, claude_code, hermes, or sdep_subprocess.",
+            next_step=(
+                "Set executor to dry_run, codex, claude_code, hermes, "
+                "openclaw, or sdep_subprocess."
+            ),
             metadata=runtime.to_payload(),
         )
     detail = (
@@ -707,6 +713,10 @@ def _executor_command_next_step(executor_id: str) -> str:
             "Install Claude Code CLI. Use executor_command only for advanced custom wrappers."
         ),
         "hermes": "Install Hermes CLI. Use executor_command only for advanced custom wrappers.",
+        "openclaw": (
+            "Install OpenClaw CLI. OpenClaw permissions are controlled by "
+            "`openclaw exec-policy` and sandbox settings; Spice does not switch them automatically."
+        ),
         "sdep_subprocess": "Set executor_command to an executable SDEP-compatible command.",
     }.get(executor_id, "Set executor to a supported executor or configure executor_command.")
 
@@ -718,7 +728,7 @@ def _executor_cli_check(config: SpiceWorkspaceConfig | None) -> DoctorCheck:
         return DoctorCheck("executor cli", "ok", "not needed for dry_run")
     if config.executor == "sdep_subprocess":
         return DoctorCheck("executor cli", "ok", "custom SDEP subprocess command")
-    if config.executor not in {"codex", "claude_code", "hermes"}:
+    if config.executor not in {"codex", "claude_code", "hermes", "openclaw"}:
         return DoctorCheck("executor cli", "warn", "not checked for unsupported executor")
     detection = detect_executor_cli(config.executor)
     if detection.status == "ready":

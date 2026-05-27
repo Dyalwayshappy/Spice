@@ -143,6 +143,7 @@ _REAL_EXECUTION_CLAIMS = (
     "executed for real",
     "handed off to hermes",
     "handed off to codex",
+    "handed off to openclaw",
     "真实执行",
     "实际执行",
 )
@@ -174,6 +175,7 @@ _CHANGED_FILES_CLAIMS = (
 _EXECUTOR_ALIASES = {
     "hermes": {"hermes"},
     "codex": {"codex"},
+    "openclaw": {"openclaw", "open claw"},
     "claude_code": {"claude code", "claude"},
     "claude-code": {"claude code", "claude"},
     "dry_run": {"dry run", "dry-run"},

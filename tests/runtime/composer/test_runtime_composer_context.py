@@ -117,6 +117,57 @@ class RuntimeComposerContextTests(unittest.TestCase):
         self.assertEqual(context["evidence_context"]["workspace"]["perception_id"], "workspace.001")
         self.assertNotIn("raw_file_contents", repr(workspace))
 
+    def test_compact_context_preserves_safe_openclaw_capability_policy_metadata(self) -> None:
+        context = compact_composer_context(
+            {
+                "executor_capabilities": {
+                    "executor_id": "openclaw",
+                    "provider": "openclaw",
+                    "status": "available",
+                    "source": "static_baseline",
+                    "capability_ids": [
+                        "general_execution",
+                        "tool_use",
+                        "gateway_agent_turn",
+                        "agent_routing",
+                        "workspace_write",
+                        "browser_or_external_tools",
+                        "message_or_channel_work",
+                        "channel_messaging",
+                    ],
+                    "permission_modes": ["read_only", "workspace_write", "danger_full_access"],
+                    "summary": "Good for OpenClaw Gateway-backed agent turns.",
+                    "limitations": [
+                        "Static baseline, not live tool inventory.",
+                        "OpenClaw permissions are controlled by OpenClaw exec-policy.",
+                    ],
+                    "metadata": {
+                        "routing_model": "gateway_agent_turn",
+                        "permission_enforcement": "executor_policy",
+                        "permission_note": "OpenClaw policy owns the final tool boundary.",
+                        "policy_commands": [
+                            "openclaw exec-policy show --json",
+                            "openclaw sandbox explain --json",
+                        ],
+                        "recommended_policy": {
+                            "read_only": "deny-all or read-only allowlist",
+                            "workspace_write": "cautious",
+                            "danger_full_access": "yolo",
+                        },
+                        "raw_sdep_describe_response": {"drop": True},
+                    },
+                }
+            }
+        )
+
+        capabilities = context["executor_capabilities"]
+        self.assertEqual(capabilities["executor_id"], "openclaw")
+        self.assertIn("gateway_agent_turn", capabilities["capability_ids"])
+        self.assertEqual(capabilities["metadata"]["permission_enforcement"], "executor_policy")
+        self.assertEqual(capabilities["metadata"]["recommended_policy"]["workspace_write"], "cautious")
+        self.assertIn("openclaw exec-policy show --json", capabilities["metadata"]["policy_commands"])
+        self.assertNotIn("raw_sdep_describe_response", repr(capabilities))
+
     def test_compact_context_keeps_url_perception_facts_without_raw_payloads(self) -> None:
         context = compact_composer_context(
             {

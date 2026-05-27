@@ -12,12 +12,15 @@ from spice.runtime import (
     HermesExecutorProvider,
     LocalJsonStoreProvider,
     ManualInputProvider,
+    OpenClawExecutorProvider,
     OpenChroniclePerceptionProvider,
     PollPerceptionProvider,
     default_runtime_provider_descriptors,
+    execute_openclaw_approval,
     run_once,
     setup_workspace,
 )
+import spice.runtime as runtime_exports
 
 
 NOW = datetime(2026, 4, 29, 6, 0, tzinfo=timezone.utc)
@@ -114,6 +117,25 @@ class RuntimeProviderTests(unittest.TestCase):
         self.assertTrue(descriptor["metadata"]["real_executor_called"])
         json.dumps(descriptor)
 
+    def test_openclaw_executor_provider_describes_policy_bridge(self) -> None:
+        provider = OpenClawExecutorProvider()
+        descriptor = provider.descriptor().to_payload()
+
+        self.assertEqual(descriptor["provider_id"], "openclaw")
+        self.assertEqual(descriptor["provider_type"], "executor")
+        self.assertEqual(descriptor["metadata"]["transport"], "local_subprocess")
+        self.assertEqual(descriptor["metadata"]["executor"], "openclaw")
+        self.assertTrue(descriptor["metadata"]["real_executor_called"])
+        self.assertEqual(descriptor["metadata"]["permission_enforcement"], "executor_policy")
+        self.assertIn("openclaw exec-policy show --json", descriptor["metadata"]["policy_commands"])
+        json.dumps(descriptor)
+
+    def test_openclaw_runtime_exports_are_public(self) -> None:
+        self.assertIs(runtime_exports.execute_openclaw_approval, execute_openclaw_approval)
+        self.assertIs(runtime_exports.OpenClawExecutorProvider, OpenClawExecutorProvider)
+        self.assertIn("execute_openclaw_approval", runtime_exports.__all__)
+        self.assertIn("OpenClawExecutorProvider", runtime_exports.__all__)
+
     def test_default_runtime_provider_descriptors_are_stable(self) -> None:
         descriptors = default_runtime_provider_descriptors()
 
@@ -129,6 +151,7 @@ class RuntimeProviderTests(unittest.TestCase):
                 "codex_executor",
                 "claude_code_executor",
                 "hermes_executor",
+                "openclaw_executor",
             },
         )
         self.assertEqual(descriptors["perception"]["provider_id"], "manual")
@@ -143,6 +166,11 @@ class RuntimeProviderTests(unittest.TestCase):
         self.assertEqual(descriptors["codex_executor"]["provider_id"], "codex")
         self.assertEqual(descriptors["claude_code_executor"]["provider_id"], "claude_code")
         self.assertEqual(descriptors["hermes_executor"]["provider_id"], "hermes")
+        self.assertEqual(descriptors["openclaw_executor"]["provider_id"], "openclaw")
+        self.assertEqual(
+            descriptors["openclaw_executor"]["metadata"]["permission_enforcement"],
+            "executor_policy",
+        )
         json.dumps(descriptors)
 
     def test_run_once_records_runtime_provider_contract(self) -> None:

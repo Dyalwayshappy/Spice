@@ -161,6 +161,7 @@ class SetupCLITests(unittest.TestCase):
             self.assertIn("Spice Executors", output)
             self.assertIn("dry_run", output)
             self.assertIn("codex", output)
+            self.assertIn("openclaw", output)
 
     def test_spice_executor_list_json_is_parseable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -175,6 +176,8 @@ class SetupCLITests(unittest.TestCase):
             payload = json.loads(stdout.getvalue())
             self.assertEqual(payload["configured_executor"], "dry_run")
             self.assertTrue(any(item["executor_id"] == "dry_run" for item in payload["executors"]))
+            openclaw = next(item for item in payload["executors"] if item["executor_id"] == "openclaw")
+            self.assertEqual(openclaw["permission_enforcement"], "executor_policy")
 
     def test_spice_executor_doctor_outputs_runtime_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

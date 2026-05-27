@@ -59,7 +59,7 @@ VALID_WORKSPACE_CONFIG_KEYS = frozenset(DEFAULT_WORKSPACE_CONFIG.keys())
 VALID_WORKSPACE_PERCEPTION_CONFIG_KEYS = frozenset(DEFAULT_WORKSPACE_PERCEPTION_CONFIG.keys())
 VALID_WORKSPACE_PERCEPTION_DEPTHS = frozenset({"auto", "normal", "deep", "native"})
 VALID_WORKSPACE_EXECUTORS = frozenset(
-    {"claude_code", "codex", "dry_run", "hermes", "sdep_subprocess"}
+    {"claude_code", "codex", "dry_run", "hermes", "openclaw", "sdep_subprocess"}
 )
 VALID_WORKSPACE_LLM_PROVIDERS = frozenset(
     {

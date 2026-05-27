@@ -100,6 +100,52 @@ _STATIC_EXECUTOR_CAPABILITY_BASELINES: dict[str, dict[str, Any]] = {
         ],
         "metadata": {"baseline_only": True, "live_tool_list": False},
     },
+    "openclaw": {
+        "executor_id": "openclaw",
+        "provider": "openclaw",
+        "status": "available",
+        "source": "static_baseline",
+        "capability_ids": [
+            "general_execution",
+            "tool_use",
+            "gateway_agent_turn",
+            "agent_routing",
+            "workspace_write",
+            "browser_or_external_tools",
+            "message_or_channel_work",
+            "channel_messaging",
+        ],
+        "permission_modes": ["read_only", "workspace_write", "danger_full_access"],
+        "summary": (
+            "Good for OpenClaw Gateway-backed agent turns, channel workflows, "
+            "and broad executor handoff after Spice approval."
+        ),
+        "limitations": [
+            _BASELINE_LIMITATION,
+            "OpenClaw permissions are controlled by OpenClaw exec-policy, approvals, and sandbox config.",
+            "This baseline describes the OpenClaw integration path, not a live OpenClaw tool inventory.",
+            "Actual channels, tools, skills, and agent routing vary by installation.",
+        ],
+        "metadata": {
+            "baseline_only": True,
+            "live_tool_list": False,
+            "routing_model": "gateway_agent_turn",
+            "permission_enforcement": "executor_policy",
+            "permission_note": (
+                "Spice approval decides whether to hand off. OpenClaw exec-policy, "
+                "approvals, and sandbox config decide what OpenClaw may do."
+            ),
+            "policy_commands": [
+                "openclaw exec-policy show --json",
+                "openclaw sandbox explain --json",
+            ],
+            "recommended_policy": {
+                "read_only": "deny-all or an equivalent read-only allowlist",
+                "workspace_write": "cautious",
+                "danger_full_access": "yolo; Spice does not switch this automatically",
+            },
+        },
+    },
     "sdep_subprocess": {
         "executor_id": "sdep_subprocess",
         "provider": "sdep_subprocess",
@@ -121,6 +167,8 @@ _EXECUTOR_ID_ALIASES = {
     "claude-code": "claude_code",
     "claudecode": "claude_code",
     "dryrun": "dry_run",
+    "open-claw": "openclaw",
+    "open_claw": "openclaw",
     "sdep": "sdep_subprocess",
 }
 

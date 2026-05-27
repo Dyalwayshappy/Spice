@@ -20,6 +20,7 @@ from spice.runtime.claude_code_provider import execute_claude_code_approval
 from spice.runtime.codex_provider import execute_codex_approval
 from spice.runtime.dry_run_executor import DryRunExecutionResult, execute_dry_run_approval
 from spice.runtime.hermes_provider import execute_hermes_approval
+from spice.runtime.openclaw_provider import execute_openclaw_approval
 from spice.perception.providers.open_chronicle import OpenChroniclePerceptionProvider
 from spice.perception.providers.poll import PollPerceptionProvider
 from spice.runtime.sdep_subprocess_executor import (
@@ -406,6 +407,49 @@ class HermesExecutorProvider:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class OpenClawExecutorProvider:
+    provider_id: str = "openclaw"
+
+    def descriptor(self) -> RuntimeProviderDescriptor:
+        return RuntimeProviderDescriptor(
+            provider_id=self.provider_id,
+            provider_type="executor",
+            implementation="spice.runtime.providers.OpenClawExecutorProvider",
+            metadata={
+                "input": "approved approval_id + planned SDEP execute.request",
+                "output": "SDEP execute.response + OutcomeRecord",
+                "transport": "local_subprocess",
+                "executor": "openclaw",
+                "shell": False,
+                "real_executor_called": True,
+                "permission_enforcement": "executor_policy",
+                "policy_commands": [
+                    "openclaw exec-policy show --json",
+                    "openclaw sandbox explain --json",
+                ],
+                "permission_note": "Spice does not mutate OpenClaw policy; configure OpenClaw exec-policy before handoff.",
+            },
+        )
+
+    def execute_approval(
+        self,
+        approval_id: str,
+        *,
+        command: str | list[str] = "openclaw agent --json --message",
+        project_root: str | Path = ".",
+        timeout_seconds: int = 600,
+        now: datetime | None = None,
+    ) -> SDEPSubprocessExecutionResult:
+        return execute_openclaw_approval(
+            approval_id,
+            command=command,
+            project_root=project_root,
+            timeout_seconds=timeout_seconds,
+            now=now,
+        )
+
+
 def default_runtime_provider_descriptors() -> dict[str, dict[str, Any]]:
     return {
         "perception": ManualInputProvider().descriptor().to_payload(),
@@ -437,6 +481,7 @@ def default_runtime_provider_descriptors() -> dict[str, dict[str, Any]]:
         "codex_executor": CodexExecutorProvider().descriptor().to_payload(),
         "claude_code_executor": ClaudeCodeExecutorProvider().descriptor().to_payload(),
         "hermes_executor": HermesExecutorProvider().descriptor().to_payload(),
+        "openclaw_executor": OpenClawExecutorProvider().descriptor().to_payload(),
     }
 
 

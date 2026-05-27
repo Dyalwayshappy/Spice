@@ -130,6 +130,33 @@ _EXECUTOR_RUNTIME_SPECS: dict[str, ExecutorRuntimeSpec] = {
             ),
         },
     ),
+    "openclaw": ExecutorRuntimeSpec(
+        executor_id="openclaw",
+        transport="sdep_subprocess_wrapper",
+        default_command="openclaw agent --json --message",
+        permission_enforcement="executor_policy",
+        permission_commands={
+            "read_only": "openclaw agent --json --message",
+            "workspace_write": "openclaw agent --json --message",
+            "danger_full_access": "openclaw agent --json --message",
+        },
+        command_required=True,
+        real_executor=True,
+        sends_sdep_request=True,
+        metadata={
+            "description": "OpenClaw-compatible executor wrapper.",
+            "permission_note": (
+                "OpenClaw permissions are governed by OpenClaw exec-policy, approvals, "
+                "and sandbox config. Inspect with `openclaw exec-policy show --json` "
+                "and `openclaw sandbox explain --json`."
+            ),
+            "recommended_policy": {
+                "read_only": "deny-all or an equivalent read-only allowlist",
+                "workspace_write": "cautious",
+                "danger_full_access": "yolo; Spice does not switch this automatically",
+            },
+        },
+    ),
 }
 
 
@@ -281,6 +308,9 @@ def _is_legacy_generated_command(executor_id: str, command: str) -> bool:
             "hermes -z --yolo",
             "hermes chat -Q",
             "hermes chat --yolo -Q",
+        },
+        "openclaw": {
+            "openclaw agent --json --message",
         },
     }
     return command in legacy_commands.get(executor_id, set())

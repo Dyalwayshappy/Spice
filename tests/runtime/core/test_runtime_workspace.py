@@ -97,6 +97,8 @@ class RuntimeWorkspaceTests(unittest.TestCase):
             self.assertEqual(config.executor, "claude_code")
             config = update_workspace_config(tmp_dir, "executor", "hermes")
             self.assertEqual(config.executor, "hermes")
+            config = update_workspace_config(tmp_dir, "executor", "openclaw")
+            self.assertEqual(config.executor, "openclaw")
             config = update_workspace_config(tmp_dir, "llm_provider", "openai")
             self.assertEqual(config.llm_provider, "openai")
             config = update_workspace_config(tmp_dir, "llm_provider", "anthropic")

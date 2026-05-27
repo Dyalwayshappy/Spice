@@ -13,6 +13,7 @@ _EXECUTOR_COMMANDS: dict[str, str] = {
     "codex": "codex",
     "claude_code": "claude",
     "hermes": "hermes",
+    "openclaw": "openclaw",
 }
 
 
@@ -48,7 +49,10 @@ def detect_executor_cli(
             executor_id=normalized,
             command_name="",
             status="unsupported",
-            detail="Executor CLI discovery only supports codex, claude_code, and hermes.",
+            detail=(
+                "Executor CLI discovery only supports codex, claude_code, "
+                "hermes, and openclaw."
+            ),
         )
 
     found = which(command_name)
@@ -116,7 +120,7 @@ def detect_executor_cli(
 def detect_known_executor_clis() -> dict[str, ExecutorCLIDetection]:
     return {
         executor_id: detect_executor_cli(executor_id)
-        for executor_id in ("codex", "claude_code", "hermes")
+        for executor_id in ("codex", "claude_code", "hermes", "openclaw")
     }
 
 
@@ -155,6 +159,13 @@ def _detect_app_installations(executor_id: str) -> tuple[str, ...]:
             [
                 home / ".hermes",
                 home / ".config" / "hermes",
+            ]
+        )
+    elif executor_id == "openclaw":
+        candidates.extend(
+            [
+                home / ".openclaw",
+                home / ".config" / "openclaw",
             ]
         )
     return tuple(str(path) for path in candidates if path.exists())

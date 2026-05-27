@@ -169,6 +169,37 @@ class RuntimeExecutorCapabilitySnapshotTests(unittest.TestCase):
         self.assertTrue(snapshot.metadata["baseline_only"])
         self.assertFalse(snapshot.metadata["live_tool_list"])
 
+    def test_static_baseline_for_openclaw_delegates_permissions_to_openclaw_policy(self) -> None:
+        snapshot = static_executor_capability_snapshot("openclaw")
+
+        self.assertEqual(snapshot.executor_id, "openclaw")
+        self.assertEqual(snapshot.provider, "openclaw")
+        self.assertEqual(snapshot.status, "available")
+        self.assertIn("general_execution", snapshot.capability_ids)
+        self.assertIn("gateway_agent_turn", snapshot.capability_ids)
+        self.assertIn("agent_routing", snapshot.capability_ids)
+        self.assertIn("workspace_write", snapshot.capability_ids)
+        self.assertIn("browser_or_external_tools", snapshot.capability_ids)
+        self.assertIn("channel_messaging", snapshot.capability_ids)
+        self.assertEqual(
+            snapshot.metadata["permission_enforcement"],
+            "executor_policy",
+        )
+        self.assertEqual(snapshot.metadata["routing_model"], "gateway_agent_turn")
+        self.assertEqual(snapshot.metadata["recommended_policy"]["workspace_write"], "cautious")
+        self.assertIn("openclaw exec-policy show --json", snapshot.metadata["policy_commands"])
+        self.assertIn("openclaw sandbox explain --json", snapshot.metadata["policy_commands"])
+        self.assertIn(
+            "OpenClaw permissions are controlled by OpenClaw exec-policy, approvals, and sandbox config.",
+            snapshot.limitations,
+        )
+        self.assertIn("not a live OpenClaw tool inventory", " ".join(snapshot.limitations))
+
+    def test_static_baseline_for_openclaw_accepts_common_aliases(self) -> None:
+        self.assertEqual(static_executor_capability_snapshot("open-claw").executor_id, "openclaw")
+        self.assertEqual(static_executor_capability_snapshot("open claw").executor_id, "openclaw")
+        self.assertEqual(static_executor_capability_snapshot("spice.openclaw").executor_id, "openclaw")
+
     def test_static_baseline_for_sdep_subprocess_is_unknown_until_describe(self) -> None:
         snapshot = static_executor_capability_snapshot("sdep")
 
@@ -191,7 +222,7 @@ class RuntimeExecutorCapabilitySnapshotTests(unittest.TestCase):
 
         self.assertEqual(
             sorted(snapshots),
-            ["claude_code", "codex", "dry_run", "hermes", "sdep_subprocess"],
+            ["claude_code", "codex", "dry_run", "hermes", "openclaw", "sdep_subprocess"],
         )
         snapshots["codex"].capability_ids.append("mutated")
 

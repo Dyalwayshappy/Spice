@@ -55,6 +55,7 @@ from spice.runtime.executor_status import (
 from spice.runtime.claude_code_provider import execute_claude_code_approval
 from spice.runtime.codex_provider import execute_codex_approval
 from spice.runtime.hermes_provider import execute_hermes_approval
+from spice.runtime.openclaw_provider import execute_openclaw_approval
 from spice.runtime.context_debug import (
     compile_workspace_decision_context_payload,
     render_decision_context_text,
@@ -306,6 +307,7 @@ from spice.runtime.providers import (
     HermesExecutorProvider,
     LocalJsonStoreProvider,
     ManualInputProvider,
+    OpenClawExecutorProvider,
     PerceptionProvider,
     RuntimeProviderDescriptor,
     SDEPSubprocessExecutorProvider,
@@ -450,6 +452,7 @@ __all__ = [
     "CodexExecutorProvider",
     "ExecutorProvider",
     "HermesExecutorProvider",
+    "OpenClawExecutorProvider",
     "LocalJsonStoreProvider",
     "ManualInputProvider",
     "OpenChronicleMCPClient",
@@ -502,6 +505,7 @@ __all__ = [
     "execute_claude_code_approval",
     "execute_codex_approval",
     "execute_hermes_approval",
+    "execute_openclaw_approval",
     "execute_sdep_subprocess_approval",
     "finalize_runtime_delegated_perception_result",
     "run_delegated_perception_handoff",

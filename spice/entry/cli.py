@@ -45,6 +45,7 @@ from spice.runtime import (
     execute_codex_approval,
     execute_dry_run_approval,
     execute_hermes_approval,
+    execute_openclaw_approval,
     execute_sdep_subprocess_approval,
     load_workspace_config,
     list_sessions,
@@ -675,12 +676,15 @@ def build_parser() -> argparse.ArgumentParser:
             "[--timeout SECONDS] [--json]\n"
             "             spice execute hermes <approval_id> [--command CMD] [--workspace PATH] "
             "[--timeout SECONDS] [--json]\n"
+            "             spice execute openclaw <approval_id> [--command CMD] [--workspace PATH] "
+            "[--timeout SECONDS] [--json]\n"
             "             spice execute sdep <approval_id> --command CMD [--workspace PATH] "
             "[--timeout SECONDS] [--json]"
         ),
         epilog=(
             "By default, Spice reads .spice/config.json and dispatches to the configured "
-            "executor. Use 'dry-run', 'codex', 'claude-code', 'hermes', or 'sdep' to explicitly override the configured executor."
+            "executor. Use 'dry-run', 'codex', 'claude-code', 'hermes', 'openclaw', "
+            "or 'sdep' to explicitly override the configured executor."
         ),
     )
     execute.add_argument(
@@ -1333,6 +1337,41 @@ def _execute_hermes_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _execute_openclaw_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="spice execute openclaw",
+        description="Run an approved SDEP handoff through a local OpenClaw command.",
+    )
+    parser.add_argument("approval_id", help="Approved approval id to execute with OpenClaw.")
+    parser.add_argument(
+        "--command",
+        default="openclaw agent --json --message",
+        help=(
+            "OpenClaw command to run. `openclaw agent` receives the task/context prompt "
+            "as `--message MESSAGE`; custom commands receive stdin "
+            "(default: openclaw agent --json --message)."
+        ),
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=600,
+        help="OpenClaw command timeout in seconds (default: 600).",
+    )
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path("."),
+        help="Project root containing .spice/ (default: current directory).",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print OpenClaw execution artifact as JSON instead of text.",
+    )
+    return parser
+
+
 def _print_cli_error(
     command: str,
     error: object,
@@ -1382,11 +1421,11 @@ def _suggestions_for_error(
         return [f"Run `spice setup{workspace_flag}` first, then retry the command."]
     if "requires executor_command" in text:
         return [
-            "For Codex, Claude Code, or Hermes, set `executor` and `executor_permission_mode`; Spice will resolve the command.",
+            "For Codex, Claude Code, Hermes, or OpenClaw, set `executor` and `executor_permission_mode`; Spice will resolve the command.",
             "For custom SDEP subprocesses, set `executor_command` or run `spice execute sdep <approval_id> --command \"python -m spice.runtime.sdep_echo_executor\"`.",
         ]
     if "unsupported executor" in text:
-        return ["Set `executor` to `dry_run`, `codex`, `claude_code`, `hermes`, or `sdep_subprocess` in .spice/config.json."]
+        return ["Set `executor` to `dry_run`, `codex`, `claude_code`, `hermes`, `openclaw`, or `sdep_subprocess` in .spice/config.json."]
     if "command poll is disabled" in text:
         return [
             "Pass `--allow-command-poll` for this command.",
@@ -1413,7 +1452,7 @@ def _suggestions_for_error(
         ]
     if "invalid executor" in text:
         return [
-            "Use `spice config set executor dry_run`, `spice config set executor codex`, `spice config set executor claude_code`, `spice config set executor hermes`, or `spice config set executor sdep_subprocess`."
+            "Use `spice config set executor dry_run`, `spice config set executor codex`, `spice config set executor claude_code`, `spice config set executor hermes`, `spice config set executor openclaw`, or `spice config set executor sdep_subprocess`."
         ]
     if "session does not exist" in text:
         return [f"Run `spice session list{workspace_flag}` to find available sessions."]
@@ -2146,7 +2185,7 @@ def _handle_execute_dispatch(args: argparse.Namespace) -> int:
         return 2
 
     execute_mode = "default"
-    if execute_args[0] in {"dry-run", "codex", "claude-code", "hermes", "sdep"}:
+    if execute_args[0] in {"dry-run", "codex", "claude-code", "hermes", "openclaw", "sdep"}:
         execute_mode = execute_args.pop(0)
     elif execute_args[0] == "default":
         print(
@@ -2167,6 +2206,9 @@ def _handle_execute_dispatch(args: argparse.Namespace) -> int:
     elif execute_mode == "hermes":
         parser = _execute_hermes_parser()
         handler = _handle_execute_hermes
+    elif execute_mode == "openclaw":
+        parser = _execute_openclaw_parser()
+        handler = _handle_execute_openclaw
     elif execute_mode == "sdep":
         parser = _execute_sdep_parser()
         handler = _handle_execute_sdep
@@ -2225,6 +2267,13 @@ def _handle_execute_default(args: argparse.Namespace) -> int:
                 project_root=args.workspace,
                 timeout_seconds=int(args.timeout),
             )
+        elif executor.executor_id == "openclaw":
+            result = execute_openclaw_approval(
+                args.approval_id,
+                command=executor.command,
+                project_root=args.workspace,
+                timeout_seconds=int(args.timeout),
+            )
         elif executor.executor_id == "sdep_subprocess":
             result = execute_sdep_subprocess_approval(
                 args.approval_id,
@@ -2235,7 +2284,7 @@ def _handle_execute_default(args: argparse.Namespace) -> int:
         else:
             raise ValueError(
                 f"Unsupported executor in .spice/config.json: {executor.executor_id!r}. "
-                "Supported values: dry_run, codex, claude_code, hermes, sdep_subprocess."
+                "Supported values: dry_run, codex, claude_code, hermes, openclaw, sdep_subprocess."
             )
         _print_execution_result(result, json_output=bool(args.json))
         return 0
@@ -2301,6 +2350,21 @@ def _handle_execute_hermes(args: argparse.Namespace) -> int:
         return 0
     except Exception as exc:
         _print_cli_error("execute hermes", exc, workspace=args.workspace)
+        return 1
+
+
+def _handle_execute_openclaw(args: argparse.Namespace) -> int:
+    try:
+        result = execute_openclaw_approval(
+            args.approval_id,
+            command=args.command,
+            project_root=args.workspace,
+            timeout_seconds=int(args.timeout),
+        )
+        _print_execution_result(result, json_output=bool(args.json))
+        return 0
+    except Exception as exc:
+        _print_cli_error("execute openclaw", exc, workspace=args.workspace)
         return 1
 
 

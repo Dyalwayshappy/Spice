@@ -85,6 +85,7 @@ from spice.runtime.follow_up import (
     answer_why_not_candidate,
 )
 from spice.runtime.hermes_provider import execute_hermes_approval
+from spice.runtime.openclaw_provider import execute_openclaw_approval
 from spice.runtime.interactive_shell import InteractiveShellResult, run_interactive_shell
 from spice.runtime.memory_writeback import (
     skipped_general_evolution_memory_writeback,
@@ -1532,6 +1533,11 @@ class SpiceTUIShell:
                     config,
                     permission_mode,
                 )
+            elif permission_mode is None and executor.permission_enforcement == "executor_policy":
+                permission_mode = self._confirm_executor_permission_for_approval(approval_id)
+                if permission_mode is None:
+                    stream.finish("Execution paused.", "permission not granted")
+                    return
             if executor.status == "unsupported":
                 raise ValueError(executor.detail)
             if executor.status != "ready":
@@ -1630,6 +1636,12 @@ class SpiceTUIShell:
             )
         if executor.executor_id == "hermes":
             return execute_hermes_approval(
+                approval_id,
+                command=executor.command,
+                project_root=self.project_root,
+            )
+        if executor.executor_id == "openclaw":
+            return execute_openclaw_approval(
                 approval_id,
                 command=executor.command,
                 project_root=self.project_root,
@@ -3137,9 +3149,12 @@ class SpiceTUIShell:
             return executor.permission_mode
         if executor.permission_enforcement != "command_flag":
             self.print(
-                "This approval requires "
-                f"{requirement.required_permission}, but {executor.executor_id} permission escalation "
-                "is not automated yet. The approval remains pending."
+                _executor_policy_permission_boundary_text(
+                    executor_id=executor.executor_id,
+                    current_permission=executor.permission_mode,
+                    required_permission=requirement.required_permission,
+                    reason=requirement.reason,
+                )
             )
             return None
         while True:
@@ -4618,6 +4633,40 @@ def _permission_escalation_details(
     )
 
 
+def _executor_policy_permission_boundary_text(
+    *,
+    executor_id: str,
+    current_permission: str,
+    required_permission: str,
+    reason: str,
+) -> str:
+    executor = _executor_loading_name(executor_id)
+    lines = [
+        "Execution permission is controlled by the executor policy.",
+        (
+            f"This approval requires {required_permission}, but Spice is configured for "
+            f"{current_permission} with {executor}."
+        ),
+        f"reason: {reason}",
+        "",
+        "Spice will not change the executor's own policy automatically.",
+    ]
+    if executor_id == "openclaw":
+        lines.extend(
+            [
+                "For OpenClaw, inspect or change policy outside Spice:",
+                "  openclaw exec-policy show --json",
+                "  openclaw sandbox explain --json",
+                "  openclaw exec-policy preset cautious",
+                "",
+                "After the policy and .spice executor_permission_mode match this request, retry the approval.",
+            ]
+        )
+    else:
+        lines.append("Update the executor policy or Spice executor_permission_mode, then retry the approval.")
+    return "\n".join(lines)
+
+
 def _runtime_mode(config: dict[str, Any]) -> str:
     executor = str(config.get("executor") or "dry_run")
     llm = str(config.get("llm_provider") or "deterministic")
@@ -4625,7 +4674,10 @@ def _runtime_mode(config: dict[str, Any]) -> str:
         return "decision + dry-run"
     if executor == "dry_run":
         return "LLM decision + dry-run"
-    return "configured executor handoff"
+    executor_name = _executor_loading_name(executor)
+    if llm == "deterministic":
+        return f"decision + {executor_name} handoff"
+    return f"LLM decision + {executor_name} handoff"
 
 
 def _decision_status_label(mode: str) -> str:
@@ -4657,6 +4709,7 @@ def _executor_loading_name(executor_id: str) -> str:
         "codex": "Codex",
         "claude_code": "Claude Code",
         "hermes": "Hermes",
+        "openclaw": "OpenClaw",
     }.get(normalized, normalized or "executor")
 
 
@@ -4667,7 +4720,7 @@ def _executor_readiness(config: dict[str, Any]) -> list[dict[str, str]]:
         configured_config = SpiceWorkspaceConfig()
     configured = str(config.get("executor") or "dry_run")
     items: list[dict[str, str]] = []
-    for executor in ["dry_run", "sdep_subprocess", "codex", "claude_code", "hermes"]:
+    for executor in ["dry_run", "sdep_subprocess", "codex", "claude_code", "hermes", "openclaw"]:
         if executor == "dry_run":
             status = "ready"
         elif configured == executor:

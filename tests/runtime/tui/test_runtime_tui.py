@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,7 +18,14 @@ from spice.perception import (
     build_workspace_perception_artifact,
     workspace_context_from_perception,
 )
-from spice.runtime import LocalJsonStore, load_workspace_memory_provider, run_once, setup_workspace, update_workspace_config
+from spice.runtime import (
+    LocalJsonStore,
+    load_workspace_config,
+    load_workspace_memory_provider,
+    run_once,
+    setup_workspace,
+    update_workspace_config,
+)
 from spice.runtime.approval_flow import load_approval
 from spice.runtime.composer_context import build_composer_context_payload
 from spice.runtime.composer_result import ComposerResult
@@ -26,6 +34,7 @@ from spice.runtime.tui.shell import (
     SpiceTUIShell,
     _investigation_action_options,
     _investigation_consent_text,
+    _startup_dashboard,
     _url_evidence_status_label,
     _workspace_evidence_status_label,
     run_tui_shell,
@@ -135,6 +144,21 @@ class RuntimeTUITests(unittest.TestCase):
         self.assertIn("Perception", text)
         self.assertIn("pending", text)
         self.assertIn("/pending", text)
+
+    def test_tui_startup_dashboard_marks_openclaw_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            setup_workspace(project_root=tmp_dir)
+            update_workspace_config(tmp_dir, "executor", "openclaw")
+            update_workspace_config(tmp_dir, "executor_command", f"{sys.executable} -c pass")
+            output = io.StringIO()
+            shell = self._plain_output_shell(tmp_dir, output)
+            config = load_workspace_config(tmp_dir).to_payload()
+
+            dashboard = _startup_dashboard(shell._store(), config)
+
+        self.assertEqual(dashboard["mode"], "decision + OpenClaw handoff")
+        executors = {item["name"]: item["status"] for item in dashboard["executors"]}
+        self.assertEqual(executors["openclaw"], "configured")
 
     def test_tui_evidence_status_labels_are_specific(self) -> None:
         self.assertEqual(
@@ -2900,6 +2924,76 @@ class RuntimeTUITests(unittest.TestCase):
         self.assertEqual([events.index(event) for event in expected], sorted(events.index(event) for event in expected))
         self.assertTrue(any("dry_run finished the handoff" in block for block in stream_blocks))
 
+    def test_tui_execute_configured_hands_off_to_openclaw(self) -> None:
+        events: list[tuple[str, str, str]] = []
+        stream_blocks: list[str] = []
+
+        class FakeStreamWriter:
+            def __init__(self, **_: object) -> None:
+                self.failed = False
+
+            def start(self) -> "FakeStreamWriter":
+                return self
+
+            def status(self, label: str, detail: str = "") -> None:
+                events.append(("status", label, detail))
+
+            def finish(self, label: str = "Ready.", detail: str = "") -> None:
+                events.append(("finish", label, detail))
+
+            def write_block(self, text: str) -> None:
+                stream_blocks.append(text)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            setup_workspace(project_root=tmp_dir)
+            command = f"{sys.executable} -c pass"
+            update_workspace_config(tmp_dir, "executor", "openclaw")
+            update_workspace_config(tmp_dir, "executor_command", command)
+            update_workspace_config(tmp_dir, "executor_permission_mode", "workspace_write")
+            output = io.StringIO()
+            shell = self._plain_output_shell(tmp_dir, output)
+            execution = SimpleNamespace(
+                artifact={
+                    "executor_provider": "openclaw",
+                    "approval_id": "approval.test",
+                    "decision_id": "decision.test",
+                    "trace_ref": "trace.test",
+                    "candidate_id": "candidate.test",
+                    "execution_id": "execution.test",
+                    "request_id": "request.test",
+                    "outcome_id": "outcome.test",
+                    "executor_id": "openclaw",
+                    "skill_id": "runtime.intent.execute",
+                    "context_pack_id": "context.test",
+                    "sdep_request_sent": True,
+                    "executor_called": True,
+                    "real_executor_called": True,
+                    "executed": True,
+                    "protocol_status": "success",
+                    "task_status": "success",
+                    "state_updated": True,
+                    "persisted": True,
+                    "state_after_ref": ".spice/state/state.json#after:test",
+                },
+                rendered_text="OPENCLAW EXECUTION\nplain executor output",
+            )
+
+            with patch("spice.runtime.tui.shell.TUIStreamWriter", FakeStreamWriter):
+                with patch.object(shell, "_confirm_executor_permission_for_approval", return_value="workspace_write") as confirm:
+                    with patch("spice.runtime.tui.shell.execute_openclaw_approval", return_value=execution) as openclaw:
+                        self.assertFalse(shell.handle_line("/execute approval.test"))
+
+        confirm.assert_called_once_with("approval.test")
+        openclaw.assert_called_once_with(
+            "approval.test",
+            command=command,
+            project_root=Path(tmp_dir),
+        )
+        self.assertIn(("status", "Handing off to OpenClaw...", "openclaw; approval=approval.test"), events)
+        self.assertIn(("status", "Waiting for executor result...", "openclaw; approval=approval.test"), events)
+        self.assertIn(("finish", "Execution recorded.", ""), events)
+        self.assertTrue(any("openclaw" in block.lower() for block in stream_blocks))
+
     def test_tui_execute_configured_renders_natural_execution_error_response(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             setup_workspace(project_root=tmp_dir)
@@ -3055,6 +3149,46 @@ class RuntimeTUITests(unittest.TestCase):
             approval = load_approval(shell._store(), approval_id)
             self.assertEqual(approval.status, "approved")
             execute.assert_called_once_with(approval_id, permission_mode="workspace_write")
+
+    def test_openclaw_approve_execute_uses_policy_boundary_instead_of_spice_escalation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            setup_workspace(project_root=tmp_dir)
+            update_workspace_config(tmp_dir, "executor", "openclaw")
+            update_workspace_config(tmp_dir, "executor_command", f"{sys.executable} -c pass")
+            update_workspace_config(tmp_dir, "executor_permission_mode", "read_only")
+            output = io.StringIO()
+            shell = self._plain_output_shell(tmp_dir, output)
+            _install_execution_ready_frame(shell)
+
+            with patch(
+                "spice.runtime.tui.shell.route_semantic_input_from_runtime_config",
+                return_value=SemanticRoute(
+                    route="execution_request",
+                    action="execute_selected",
+                    is_continuation=True,
+                    candidate_id="candidate.a",
+                    label="A",
+                    text="start it",
+                    source="llm",
+                ),
+            ):
+                self.assertFalse(shell.handle_line("start it"))
+            approval_id = str(shell.pending_decision["approval_id"])
+
+            with patch.object(shell, "_prompt_permission_escalation") as prompt:
+                with patch.object(shell, "_execute_configured") as execute:
+                    self.assertFalse(shell.handle_line("y"))
+
+            approval = load_approval(shell._store(), approval_id)
+            self.assertEqual(approval.status, "pending")
+            self.assertIsNotNone(shell.pending_decision)
+            prompt.assert_not_called()
+            execute.assert_not_called()
+            text = output.getvalue()
+            self.assertIn("Execution permission is controlled by the executor policy.", text)
+            self.assertIn("OpenClaw", text)
+            self.assertIn("openclaw exec-policy show --json", text)
+            self.assertIn("openclaw sandbox explain --json", text)
 
     def test_tui_command_completer_includes_perceive(self) -> None:
         self.assertIn("/perceive", COMMANDS)

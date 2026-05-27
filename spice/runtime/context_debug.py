@@ -1332,6 +1332,7 @@ def _executor_display_name(executor_id: str) -> str:
         "codex": "Codex",
         "claude_code": "Claude Code",
         "claude-code": "Claude Code",
+        "openclaw": "OpenClaw",
     }
     return aliases.get(normalized.lower(), normalized or "Executor")
 

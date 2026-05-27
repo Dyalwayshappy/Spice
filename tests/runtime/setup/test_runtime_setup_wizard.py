@@ -187,6 +187,7 @@ class RuntimeSetupWizardTests(unittest.TestCase):
             ("3", "codex", "codex exec --skip-git-repo-check --sandbox workspace-write -"),
             ("4", "claude_code", "claude -p --permission-mode acceptEdits"),
             ("5", "hermes", "hermes chat -Q"),
+            ("6", "openclaw", "openclaw agent --json --message"),
         ]
         for choice, executor_id, expected_command in cases:
             with self.subTest(executor_id=executor_id):
@@ -229,6 +230,55 @@ class RuntimeSetupWizardTests(unittest.TestCase):
                     self.assertEqual(result.config.executor, executor_id)
                     self.assertEqual(result.config.executor_command, "")
                     self.assertIn(expected_command, output.getvalue())
+
+    def test_setup_wizard_openclaw_reports_executor_policy_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            answers = io.StringIO(
+                "\n".join(
+                    [
+                        "",  # deterministic
+                        "6",  # openclaw
+                        "",  # workspace write permission
+                        "1",  # manual perception
+                        "",  # save review
+                    ]
+                )
+                + "\n"
+            )
+            output = io.StringIO()
+            detection = ExecutorCLIDetection(
+                executor_id="openclaw",
+                command_name="openclaw",
+                status="ready",
+                command=sys.executable,
+                executable_path=sys.executable,
+                detail=f"openclaw found on PATH: {sys.executable}",
+            )
+
+            with patch(
+                "spice.runtime.setup_wizard.detect_known_executor_clis",
+                return_value={"openclaw": detection},
+            ):
+                with patch(
+                    "spice.runtime.setup_wizard.detect_executor_cli",
+                    return_value=detection,
+                ):
+                    result = run_setup_wizard(
+                        project_root=tmp_dir,
+                        input_stream=answers,
+                        output_stream=output,
+                        password_reader=lambda prompt: "",
+                    )
+
+            self.assertEqual(result.config.executor, "openclaw")
+            self.assertEqual(result.config.executor_permission_mode, "workspace_write")
+            self.assertEqual(result.config.executor_command, "")
+            text = output.getvalue()
+            self.assertIn("Detected openclaw command: " + sys.executable, text)
+            self.assertIn("Permission enforcement is controlled by the selected executor CLI.", text)
+            self.assertIn("OpenClaw recommended policy for workspace_write: cautious", text)
+            self.assertIn("openclaw exec-policy show --json", text)
+            self.assertIn("executor_permission_source executor_policy", text)
 
     def test_setup_wizard_warns_for_broken_executor_symlink(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
