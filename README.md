@@ -1084,7 +1084,7 @@ Spice is an attempt to build a new layer in the AI stack:
 
 Our goal is simple:
 
-> **Everyone should have a Spice.**
+> **Everyone should have a Spice, an AI brain.**
 
 A system that:
 
